@@ -200,7 +200,14 @@ export class VisualizerPanel {
         const config = vscode.workspace.getConfiguration("agent-visualizer");
         const playSound = config.get<boolean>("playSound", false);
         const lastActiveTab =
-            this._workspaceState.get<string>(STATE_KEY_LAST_ACTIVE_TAB) ?? "timeline";
+            this._workspaceState.get<string>(STATE_KEY_LAST_ACTIVE_TAB) ?? "overview";
+
+        const themeKind = vscode.window.activeColorTheme.kind;
+        const initialTheme =
+            themeKind === vscode.ColorThemeKind.Light ||
+            themeKind === vscode.ColorThemeKind.HighContrastLight
+                ? "light"
+                : "dark";
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -216,8 +223,9 @@ export class VisualizerPanel {
       window.__INITIAL_SESSION__ = ${JSON.stringify(session)};
       window.__PLAY_SOUND_ENABLED__ = ${JSON.stringify(playSound)};
       window.__INITIAL_TAB__ = ${JSON.stringify(lastActiveTab)};
+      window.__INITIAL_THEME__ = ${JSON.stringify(initialTheme)};
     </script>
-    <script src="${scriptUri}"></script>
+    <script type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
     }
