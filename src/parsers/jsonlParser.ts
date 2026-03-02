@@ -2,6 +2,9 @@ import { Message, ToolCall, Session } from "./types";
 import * as fs from "fs";
 import * as path from "path";
 
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_SUBAGENT_DEPTH = 5;
+
 interface JsonlMessage {
     role: "user" | "assistant";
     message: {
@@ -16,7 +19,14 @@ export class JsonlParser {
     /**
      * Parse a .jsonl format transcript file
      */
-    static parse(filePath: string, parentDir: string): Session {
+    static parse(filePath: string, parentDir: string, depth: number = 0): Session {
+        const stat = fs.statSync(filePath);
+        if (stat.size > MAX_FILE_SIZE_BYTES) {
+            throw new Error(
+                `Transcript file too large to parse: ${stat.size} bytes (limit: ${MAX_FILE_SIZE_BYTES})`
+            );
+        }
+
         const content = fs.readFileSync(filePath, "utf-8");
         const lines = content.split("\n").filter((line) => line.trim());
         const messages: Message[] = [];
@@ -42,24 +52,24 @@ export class JsonlParser {
             }
         }
 
-        // Extract parent UUID from path
         const fileName = path.basename(filePath, ".jsonl");
-        const parentUuid = path.basename(parentDir);
-        const id = fileName.substring(0, 8);
+        const id = fileName;
 
-        // Load subagents
+        // Load subagents up to the maximum allowed depth
         const subagents: Session[] = [];
-        const subagentsDir = path.join(parentDir, "subagents");
+        if (depth < MAX_SUBAGENT_DEPTH) {
+            const subagentsDir = path.join(parentDir, "subagents");
 
-        if (fs.existsSync(subagentsDir)) {
-            const subagentFiles = fs
-                .readdirSync(subagentsDir)
-                .filter((f) => f.endsWith(".jsonl"));
+            if (fs.existsSync(subagentsDir)) {
+                const subagentFiles = fs
+                    .readdirSync(subagentsDir)
+                    .filter((f) => f.endsWith(".jsonl"));
 
-            for (const file of subagentFiles) {
-                const subagentPath = path.join(subagentsDir, file);
-                const subagentSession = this.parse(subagentPath, subagentsDir);
-                subagents.push(subagentSession);
+                for (const file of subagentFiles) {
+                    const subagentPath = path.join(subagentsDir, file);
+                    const subagentSession = this.parse(subagentPath, subagentsDir, depth + 1);
+                    subagents.push(subagentSession);
+                }
             }
         }
 

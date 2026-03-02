@@ -63,6 +63,16 @@
                 "category": "Agent Visualizer"
             }
         ],
+        "configuration": {
+            "title": "Agent Visualizer",
+            "properties": {
+                "agent-visualizer.playSound": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Play a sound when the agent completes a turn in the open session"
+                }
+            }
+        },
         "menus": {
             "view/title": [
                 {

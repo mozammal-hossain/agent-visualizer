@@ -83,11 +83,16 @@ export class TranscriptService {
             }
         }
 
-        return sessions.sort(
-            (a, b) =>
-                fs.statSync(b.filePath).mtime.getTime() -
-                fs.statSync(a.filePath).mtime.getTime()
-        );
+        return sessions.sort((a, b) => {
+            try {
+                return (
+                    fs.statSync(b.filePath).mtime.getTime() -
+                    fs.statSync(a.filePath).mtime.getTime()
+                );
+            } catch {
+                return 0;
+            }
+        });
     }
 
     /**
@@ -95,6 +100,63 @@ export class TranscriptService {
      */
     getSession(id: string): Session | undefined {
         return this.cache.get(id);
+    }
+
+    /**
+     * Get the most recently active session whose transcript file
+     * has been modified within the last few seconds.
+     *
+     * This is used for the \"Live\" view to auto-follow the session
+     * that is currently receiving new messages.
+     */
+    getMostRecentlyActiveSession(maxAgeMs: number = 15000): Session | null {
+        if (!fs.existsSync(this.transcriptDir)) {
+            return null;
+        }
+
+        // Ensure sessions (and the cache) are up to date and sorted
+        const sessions = this.getSessions();
+        const now = Date.now();
+
+        for (const session of sessions) {
+            try {
+                const stat = fs.statSync(session.filePath);
+                const ageMs = now - stat.mtimeMs;
+                if (ageMs <= maxAgeMs) {
+                    return session;
+                }
+            } catch {
+                // Ignore files we can't stat
+                continue;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Re-parse a single transcript file and update cache. Used for live tail of the open session.
+     */
+    parseSessionFile(filePath: string, format: "txt" | "jsonl"): Session | null {
+        const resolved = path.resolve(filePath);
+        if (!resolved.startsWith(this.transcriptDir + path.sep) && resolved !== this.transcriptDir) {
+            console.error(`Refusing to parse file outside transcript directory: ${filePath}`);
+            return null;
+        }
+        try {
+            if (format === "txt") {
+                const session = TxtParser.parse(resolved);
+                this.cache.set(session.id, session);
+                return session;
+            }
+            const parentDir = path.dirname(resolved);
+            const session = JsonlParser.parse(resolved, parentDir);
+            this.cache.set(session.id, session);
+            return session;
+        } catch (e) {
+            console.error(`Failed to re-parse transcript ${filePath}:`, e);
+            return null;
+        }
     }
 
     /**

@@ -6,3 +6,5 @@ webview-ui/dist/
 webview-ui/node_modules/
 .vscode/
 *.log
+.env
+.env.*

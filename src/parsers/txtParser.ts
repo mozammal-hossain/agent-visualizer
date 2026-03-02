@@ -2,11 +2,19 @@ import { Message, ToolCall, Session } from "./types";
 import * as fs from "fs";
 import * as path from "path";
 
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
 export class TxtParser {
     /**
      * Parse a .txt format transcript file
      */
     static parse(filePath: string): Session {
+        const stat = fs.statSync(filePath);
+        if (stat.size > MAX_FILE_SIZE_BYTES) {
+            throw new Error(
+                `Transcript file too large to parse: ${stat.size} bytes (limit: ${MAX_FILE_SIZE_BYTES})`
+            );
+        }
         const content = fs.readFileSync(filePath, "utf-8");
         const messages: Message[] = [];
         let firstUserMessage = "";
@@ -111,9 +119,8 @@ export class TxtParser {
             firstUserMessage = firstUserMsg.text.substring(0, 100);
         }
 
-        // Generate ID from file path
         const fileName = path.basename(filePath, ".txt");
-        const id = fileName.substring(0, 8); // Use first 8 chars of filename
+        const id = fileName;
 
         return {
             id,

@@ -9,7 +9,7 @@ const options = {
     external: ['vscode'],
     platform: 'node',
     target: 'node18',
-    sourcemap: true,
+    sourcemap: isWatch,
 };
 
 if (isWatch) {
