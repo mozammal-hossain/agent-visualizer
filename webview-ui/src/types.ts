@@ -13,7 +13,7 @@ export interface Message {
 export interface Session {
     id: string;
     format: "txt" | "jsonl";
-    filePath: string;
+    filePath?: string;
     firstUserMessage: string;
     messages: Message[];
     subagents: Session[];

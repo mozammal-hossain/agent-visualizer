@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { SessionTreeProvider, SessionTreeItem } from "./providers/sessionTreeProvider";
 import { VisualizerPanel } from "./panels/visualizerPanel";
-import { createTranscriptService } from "./services/transcriptService";
+import { TranscriptService, createTranscriptService } from "./services/transcriptService";
 import { PathResolver } from "./services/pathResolver";
 
-let transcriptService: any;
+let transcriptService: TranscriptService;
 let treeProvider: SessionTreeProvider;
 
 export function activate(context: vscode.ExtensionContext) {

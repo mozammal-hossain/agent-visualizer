@@ -23,7 +23,14 @@ function Root() {
     const [baseTheme, setBaseTheme] = useState<ResolvedTheme>("dark");
 
     useEffect(() => {
-        const initialSession = (window as any).__INITIAL_SESSION__;
+        const rawSession = (window as any).__INITIAL_SESSION__;
+        const initialSession: Session | null =
+            rawSession !== null &&
+            typeof rawSession === "object" &&
+            typeof rawSession.id === "string" &&
+            Array.isArray(rawSession.messages)
+                ? (rawSession as Session)
+                : null;
         if (initialSession) {
             setSession(initialSession);
             prevMessageCountRef.current = initialSession.messages?.length ?? 0;

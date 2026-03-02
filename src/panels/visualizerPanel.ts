@@ -1,9 +1,27 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import * as crypto from "crypto";
 import { Session } from "../parsers/types";
 import { TranscriptService } from "../services/transcriptService";
 import { deriveStatus } from "../utils/activityStatus";
+
+const VALID_TABS = new Set(["overview", "timeline", "hierarchy", "flow", "tools"]);
+const SESSION_ID_PATTERN = /^[0-9a-f-]{8,36}$/i;
+
+/** Escape JSON for safe inline <script> embedding, preventing </script> injection. */
+function safeJsonInScript(value: unknown): string {
+    return JSON.stringify(value)
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026");
+}
+
+/** Strip absolute file paths from a session before it is sent to the webview. */
+function stripSessionFilePaths(session: Session): Record<string, unknown> {
+    const { filePath: _omit, subagents, ...rest } = session;
+    return { ...rest, subagents: subagents.map(stripSessionFilePaths) };
+}
 
 const WATCH_POLL_INTERVAL_MS = 1000;
 const STATE_KEY_LAST_SESSION_ID = "agentVisualizer.lastSessionId";
@@ -42,7 +60,6 @@ export class VisualizerPanel {
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                enableForms: true,
                 localResourceRoots: [
                     vscode.Uri.joinPath(extensionUri, "webview-ui", "dist"),
                 ],
@@ -115,10 +132,11 @@ export class VisualizerPanel {
         }
         this._currentSession = session;
         this._workspaceState.update(STATE_KEY_LAST_SESSION_ID, session.id);
-        this._panel.title = `Session: ${session.firstUserMessage}`;
+        const titleText = session.firstUserMessage.substring(0, 60);
+        this._panel.title = `Session: ${titleText}`;
         this._panel.webview.postMessage({
             type: "sessionData",
-            data: session,
+            data: stripSessionFilePaths(session),
         });
         this._panel.webview.postMessage({
             type: "sessionStatus",
@@ -151,7 +169,7 @@ export class VisualizerPanel {
                     this._currentSession = updated;
                     this._panel.webview.postMessage({
                         type: "sessionData",
-                        data: updated,
+                        data: stripSessionFilePaths(updated),
                     });
                     this._panel.webview.postMessage({
                         type: "sessionStatus",
@@ -188,7 +206,10 @@ export class VisualizerPanel {
         };
         switch (command) {
             case "openSession":
-                if (sessionId) {
+                if (
+                    typeof sessionId === "string" &&
+                    SESSION_ID_PATTERN.test(sessionId)
+                ) {
                     const session = this.transcriptService.getSession(sessionId);
                     if (session) {
                         this.setSession(session);
@@ -196,7 +217,7 @@ export class VisualizerPanel {
                 }
                 break;
             case "setActiveTab":
-                if (typeof tab === "string") {
+                if (typeof tab === "string" && VALID_TABS.has(tab)) {
                     this._workspaceState.update(STATE_KEY_LAST_ACTIVE_TAB, tab);
                 }
                 break;
@@ -204,10 +225,6 @@ export class VisualizerPanel {
     }
 
     private _getWebviewContent(session: Session): string {
-        const webviewUri = this._panel.webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, "webview-ui", "dist", "index.html")
-        );
-
         const scriptUri = this._panel.webview.asWebviewUri(
             vscode.Uri.joinPath(
                 this._extensionUri,
@@ -238,23 +255,28 @@ export class VisualizerPanel {
                 ? "light"
                 : "dark";
 
+        const nonce = crypto.randomBytes(16).toString("base64");
+        const cspSource = this._panel.webview.cspSource;
+        const safeSession = stripSessionFilePaths(session);
+
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${cspSource}; style-src ${cspSource}; img-src ${cspSource} data:; font-src ${cspSource};">
     <title>Agent Visualizer</title>
     <link rel="stylesheet" href="${styleUri}">
 </head>
 <body>
     <div id="root"></div>
-    <script>
-      window.__INITIAL_SESSION__ = ${JSON.stringify(session)};
-      window.__PLAY_SOUND_ENABLED__ = ${JSON.stringify(playSound)};
-      window.__INITIAL_TAB__ = ${JSON.stringify(lastActiveTab)};
-      window.__INITIAL_THEME__ = ${JSON.stringify(initialTheme)};
+    <script nonce="${nonce}">
+      window.__INITIAL_SESSION__ = ${safeJsonInScript(safeSession)};
+      window.__PLAY_SOUND_ENABLED__ = ${safeJsonInScript(playSound)};
+      window.__INITIAL_TAB__ = ${safeJsonInScript(lastActiveTab)};
+      window.__INITIAL_THEME__ = ${safeJsonInScript(initialTheme)};
     </script>
-    <script type="module" src="${scriptUri}"></script>
+    <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
     }

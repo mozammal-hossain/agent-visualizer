@@ -83,11 +83,16 @@ export class TranscriptService {
             }
         }
 
-        return sessions.sort(
-            (a, b) =>
-                fs.statSync(b.filePath).mtime.getTime() -
-                fs.statSync(a.filePath).mtime.getTime()
-        );
+        return sessions.sort((a, b) => {
+            try {
+                return (
+                    fs.statSync(b.filePath).mtime.getTime() -
+                    fs.statSync(a.filePath).mtime.getTime()
+                );
+            } catch {
+                return 0;
+            }
+        });
     }
 
     /**
