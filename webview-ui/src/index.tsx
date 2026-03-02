@@ -1,23 +1,55 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Session } from "./types";
+import { SessionStatus } from "./utils/activityStatus";
+import { playTurnCompleteChime } from "./utils/sound";
 import "./style.css";
 import App from "./App";
 
+function isAssistantTurnComplete(session: Session): boolean {
+    if (session.messages.length === 0) return false;
+    const last = session.messages[session.messages.length - 1];
+    if (last.role !== "assistant") return false;
+    if (last.toolCalls.length === 0) return true;
+    return last.toolCalls.every((tc) => tc.hasResult);
+}
+
 function Root() {
     const [session, setSession] = useState<Session | null>(null);
+    const [statusOverride, setStatusOverride] = useState<SessionStatus | null>(null);
+    const prevMessageCountRef = useRef<number>(0);
+    const playSoundEnabledRef = useRef<boolean>(false);
 
     useEffect(() => {
-        // Get initial session from window
         const initialSession = (window as any).__INITIAL_SESSION__;
         if (initialSession) {
             setSession(initialSession);
+            prevMessageCountRef.current = initialSession.messages?.length ?? 0;
         }
+        playSoundEnabledRef.current = (window as any).__PLAY_SOUND_ENABLED__ === true;
+        (window as any).__vscodeApi =
+            typeof (window as any).acquireVsCodeApi === "function"
+                ? (window as any).acquireVsCodeApi()
+                : null;
 
-        // Listen for messages from extension
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
             if (message.type === "sessionData") {
-                setSession(message.data);
+                const newSession = message.data as Session;
+                const prevCount = prevMessageCountRef.current;
+                const newCount = newSession.messages?.length ?? 0;
+                if (
+                    playSoundEnabledRef.current &&
+                    newCount > prevCount &&
+                    isAssistantTurnComplete(newSession)
+                ) {
+                    playTurnCompleteChime();
+                }
+                prevMessageCountRef.current = newCount;
+                setSession(newSession);
+                setStatusOverride(null);
+            }
+            if (message.type === "sessionStatus") {
+                setStatusOverride(message.status ?? null);
             }
         };
 
@@ -29,7 +61,12 @@ function Root() {
         return <div className="loading">Loading session...</div>;
     }
 
-    return <App session={session} />;
+    return (
+        <App
+            session={session}
+            statusOverride={statusOverride}
+        />
+    );
 }
 
 export default Root;

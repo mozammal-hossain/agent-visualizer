@@ -98,6 +98,26 @@ export class TranscriptService {
     }
 
     /**
+     * Re-parse a single transcript file and update cache. Used for live tail of the open session.
+     */
+    parseSessionFile(filePath: string, format: "txt" | "jsonl"): Session | null {
+        try {
+            if (format === "txt") {
+                const session = TxtParser.parse(filePath);
+                this.cache.set(session.id, session);
+                return session;
+            }
+            const parentDir = path.dirname(filePath);
+            const session = JsonlParser.parse(filePath, parentDir);
+            this.cache.set(session.id, session);
+            return session;
+        } catch (e) {
+            console.error(`Failed to re-parse transcript ${filePath}:`, e);
+            return null;
+        }
+    }
+
+    /**
      * Clear cache
      */
     clearCache(): void {

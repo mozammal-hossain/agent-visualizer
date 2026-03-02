@@ -49,10 +49,66 @@ body {
     background-color: var(--color-bg-secondary);
 }
 
-.header-content h1 {
+.header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-title-row h1 {
     margin: 0 0 8px 0;
     font-size: 18px;
     font-weight: 500;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-working .status-dot {
+    background-color: var(--color-success);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-waiting .status-dot {
+    background-color: var(--color-warning);
+}
+
+.status-idle .status-dot {
+    background-color: var(--color-text-secondary);
+}
+
+.status-working {
+    color: var(--color-success);
+    background-color: rgba(78, 201, 176, 0.15);
+}
+
+.status-waiting {
+    color: var(--color-warning);
+    background-color: rgba(220, 220, 170, 0.15);
+}
+
+.status-idle {
+    color: var(--color-text-secondary);
+    background-color: rgba(133, 133, 133, 0.15);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 .header-meta {
@@ -185,6 +241,58 @@ body {
     border: 1px solid var(--color-border);
     border-radius: 4px;
     overflow: hidden;
+}
+
+.tool-call.tool-call-subagent {
+    margin-left: 12px;
+    border-left: 3px solid #007acc;
+}
+
+.open-subagent-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid #007acc;
+    background: rgba(0, 122, 204, 0.15);
+    color: #007acc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.open-subagent-btn:hover {
+    background: rgba(0, 122, 204, 0.3);
+}
+
+.open-subagent-btn-inline {
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    border: 1px solid #007acc;
+    background: rgba(0, 122, 204, 0.15);
+    color: #007acc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.open-subagent-btn-inline:hover {
+    background: rgba(0, 122, 204, 0.3);
+}
+
+.subagent-info {
+    margin-bottom: 12px;
+    padding: 10px;
+    background: rgba(0, 122, 204, 0.08);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 122, 204, 0.3);
+}
+
+.subagent-preview {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.4;
 }
 
 .tool-call-header {

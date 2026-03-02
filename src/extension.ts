@@ -40,7 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
             VisualizerPanel.createOrShow(
                 context.extensionUri,
                 session,
-                transcriptService
+                transcriptService,
+                context.workspaceState
             );
         }
     );

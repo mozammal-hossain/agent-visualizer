@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { Session } from "../parsers/types";
 import { TranscriptService } from "../services/transcriptService";
+import { formatLastToolLabels } from "../utils/toolLabel";
 
 export class SessionTreeProvider implements vscode.TreeDataProvider<SessionTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<
@@ -64,7 +65,11 @@ export class SessionTreeItem extends vscode.TreeItem {
 
         super(displayLabel, vscode.TreeItemCollapsibleState.Collapsed);
 
-        this.description = `${session.messages.length} messages, ${session.messages.reduce((sum, m) => sum + m.toolCalls.length, 0)} tool calls`;
+        const toolCount = session.messages.reduce((sum, m) => sum + m.toolCalls.length, 0);
+        const lastTools = formatLastToolLabels(session, 2);
+        this.description = lastTools
+            ? `${session.messages.length} msgs, ${toolCount} tools · ${lastTools}`
+            : `${session.messages.length} messages, ${toolCount} tool calls`;
         this.tooltip = `ID: ${session.id}\nFormat: ${session.format}\nFile: ${session.filePath}`;
         this.command = {
             title: "Open Session",

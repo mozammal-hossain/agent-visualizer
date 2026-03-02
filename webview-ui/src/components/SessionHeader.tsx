@@ -1,15 +1,32 @@
 import React from "react";
 import { Session } from "../types";
+import { deriveStatus, SessionStatus } from "../utils/activityStatus";
 
 interface SessionHeaderProps {
     session: Session;
+    statusOverride?: SessionStatus | null;
 }
 
-function SessionHeader({ session }: SessionHeaderProps) {
+function SessionHeader({ session, statusOverride }: SessionHeaderProps) {
+    const status = statusOverride ?? deriveStatus(session);
+
+    const statusConfig = {
+        working: { label: "Working...", className: "status-working" },
+        waiting: { label: "Waiting for input", className: "status-waiting" },
+        idle: { label: "Idle", className: "status-idle" },
+    };
+    const { label, className } = statusConfig[status];
+
     return (
         <div className="session-header">
             <div className="header-content">
-                <h1>{session.firstUserMessage}</h1>
+                <div className="header-title-row">
+                    <h1>{session.firstUserMessage}</h1>
+                    <span className={`status-badge ${className}`} title={label}>
+                        <span className="status-dot" />
+                        {label}
+                    </span>
+                </div>
                 <div className="header-meta">
                     <span className="meta-item">
                         <strong>ID:</strong> {session.id}

@@ -1,19 +1,29 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
 import { Session } from "../parsers/types";
 import { TranscriptService } from "../services/transcriptService";
+import { deriveStatus } from "../utils/activityStatus";
+
+const WATCH_POLL_INTERVAL_MS = 1000;
+const STATE_KEY_LAST_SESSION_ID = "agentVisualizer.lastSessionId";
+const STATE_KEY_LAST_ACTIVE_TAB = "agentVisualizer.lastActiveTab";
 
 export class VisualizerPanel {
     public static currentPanel: VisualizerPanel | undefined;
     private readonly _panel: vscode.WebviewPanel;
     private readonly _extensionUri: vscode.Uri;
+    private readonly _workspaceState: vscode.Memento;
     private _disposables: vscode.Disposable[] = [];
     private transcriptService: TranscriptService;
+    private _currentSession: Session | null = null;
+    private _watchingFilePath: string | null = null;
 
     public static createOrShow(
         extensionUri: vscode.Uri,
         session: Session,
-        transcriptService: TranscriptService
+        transcriptService: TranscriptService,
+        workspaceState: vscode.Memento
     ) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
@@ -42,7 +52,8 @@ export class VisualizerPanel {
             panel,
             extensionUri,
             session,
-            transcriptService
+            transcriptService,
+            workspaceState
         );
     }
 
@@ -50,10 +61,12 @@ export class VisualizerPanel {
         panel: vscode.WebviewPanel,
         extensionUri: vscode.Uri,
         session: Session,
-        transcriptService: TranscriptService
+        transcriptService: TranscriptService,
+        workspaceState: vscode.Memento
     ) {
         this._panel = panel;
         this._extensionUri = extensionUri;
+        this._workspaceState = workspaceState;
         this.transcriptService = transcriptService;
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -64,14 +77,71 @@ export class VisualizerPanel {
         );
 
         this._panel.webview.html = this._getWebviewContent(session);
+        this.setSession(session);
     }
 
     private setSession(session: Session): void {
+        if (this._currentSession?.filePath !== session.filePath) {
+            this._stopWatching();
+        }
+        this._currentSession = session;
+        this._workspaceState.update(STATE_KEY_LAST_SESSION_ID, session.id);
         this._panel.title = `Session: ${session.firstUserMessage}`;
         this._panel.webview.postMessage({
             type: "sessionData",
             data: session,
         });
+        this._panel.webview.postMessage({
+            type: "sessionStatus",
+            status: deriveStatus(session),
+        });
+        this._startWatching(session);
+    }
+
+    private _startWatching(session: Session): void {
+        if (this._watchingFilePath === session.filePath) {
+            return;
+        }
+        this._stopWatching();
+        if (!session.filePath || !fs.existsSync(session.filePath)) {
+            return;
+        }
+        this._watchingFilePath = session.filePath;
+        fs.watchFile(
+            session.filePath,
+            { interval: WATCH_POLL_INTERVAL_MS },
+            (curr, prev) => {
+                if (curr.mtimeMs <= prev.mtimeMs) {
+                    return;
+                }
+                const updated = this.transcriptService.parseSessionFile(
+                    session.filePath,
+                    session.format
+                );
+                if (updated && this._currentSession?.filePath === session.filePath) {
+                    this._currentSession = updated;
+                    this._panel.webview.postMessage({
+                        type: "sessionData",
+                        data: updated,
+                    });
+                    this._panel.webview.postMessage({
+                        type: "sessionStatus",
+                        status: deriveStatus(updated),
+                    });
+                }
+            }
+        );
+    }
+
+    private _stopWatching(): void {
+        if (this._watchingFilePath) {
+            try {
+                fs.unwatchFile(this._watchingFilePath);
+            } catch {
+                // ignore
+            }
+            this._watchingFilePath = null;
+        }
     }
 
     private _onMessage(message: unknown) {
@@ -82,7 +152,11 @@ export class VisualizerPanel {
         ) {
             return;
         }
-        const { command, sessionId } = message as { command: string; sessionId?: string };
+        const { command, sessionId, tab } = message as {
+            command: string;
+            sessionId?: string;
+            tab?: string;
+        };
         switch (command) {
             case "openSession":
                 if (sessionId) {
@@ -90,6 +164,11 @@ export class VisualizerPanel {
                     if (session) {
                         this.setSession(session);
                     }
+                }
+                break;
+            case "setActiveTab":
+                if (typeof tab === "string") {
+                    this._workspaceState.update(STATE_KEY_LAST_ACTIVE_TAB, tab);
                 }
                 break;
         }
@@ -118,6 +197,11 @@ export class VisualizerPanel {
             )
         );
 
+        const config = vscode.workspace.getConfiguration("agent-visualizer");
+        const playSound = config.get<boolean>("playSound", false);
+        const lastActiveTab =
+            this._workspaceState.get<string>(STATE_KEY_LAST_ACTIVE_TAB) ?? "timeline";
+
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,6 +214,8 @@ export class VisualizerPanel {
     <div id="root"></div>
     <script>
       window.__INITIAL_SESSION__ = ${JSON.stringify(session)};
+      window.__PLAY_SOUND_ENABLED__ = ${JSON.stringify(playSound)};
+      window.__INITIAL_TAB__ = ${JSON.stringify(lastActiveTab)};
     </script>
     <script src="${scriptUri}"></script>
 </body>
@@ -138,6 +224,8 @@ export class VisualizerPanel {
 
     public dispose() {
         VisualizerPanel.currentPanel = undefined;
+        this._stopWatching();
+        this._currentSession = null;
 
         this._panel.dispose();
 
