@@ -11,7 +11,8 @@ export class PathResolver {
         const slug = workspacePath
             .split(path.sep)
             .filter((part) => part.length > 0)
-            .join("-");
+            .join("-")
+            .replace(/\./g, "-");
 
         const cursorProjectsDir = path.join(
             os.homedir(),

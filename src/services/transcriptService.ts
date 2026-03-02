@@ -1,3 +1,4 @@
+/// <reference path="../global.d.ts" />
 import * as fs from "fs";
 import * as path from "path";
 import { Session } from "../parsers/types";
@@ -22,33 +23,62 @@ export class TranscriptService {
         }
 
         const sessions: Session[] = [];
-        const files = fs.readdirSync(this.transcriptDir);
+        const entries = fs.readdirSync(this.transcriptDir);
 
-        for (const file of files) {
-            const filePath = path.join(this.transcriptDir, file);
-            const stat = fs.statSync(filePath);
-
-            // Skip directories
-            if (stat.isDirectory()) {
+        for (const entry of entries) {
+            const entryPath = path.join(this.transcriptDir, entry);
+            let stat: ReturnType<typeof fs.statSync>;
+            try {
+                stat = fs.statSync(entryPath);
+            } catch {
                 continue;
             }
 
-            if (file.endsWith(".txt")) {
-                try {
-                    const session = TxtParser.parse(filePath);
-                    sessions.push(session);
-                    this.cache.set(session.id, session);
-                } catch (e) {
-                    console.error(`Failed to parse txt file ${file}:`, e);
+            if (stat.isDirectory()) {
+                // Cursor stores .jsonl as {uuid}/{uuid}.jsonl
+                const jsonlPath = path.join(entryPath, `${entry}.jsonl`);
+                if (!fs.existsSync(jsonlPath)) {
+                    // Fallback: any .jsonl in this directory (e.g. different naming)
+                    const dirFiles = fs.readdirSync(entryPath);
+                    const firstJsonl = dirFiles.find((f: string) => f.endsWith(".jsonl"));
+                    if (firstJsonl) {
+                        const fallbackPath = path.join(entryPath, firstJsonl);
+                        try {
+                            const session = JsonlParser.parse(fallbackPath, entryPath);
+                            sessions.push(session);
+                            this.cache.set(session.id, session);
+                        } catch (e) {
+                            console.error(`Failed to parse jsonl in dir ${entry}:`, e);
+                        }
+                    }
+                } else {
+                    try {
+                        const session = JsonlParser.parse(jsonlPath, entryPath);
+                        sessions.push(session);
+                        this.cache.set(session.id, session);
+                    } catch (e) {
+                        console.error(`Failed to parse jsonl in dir ${entry}:`, e);
+                    }
                 }
-            } else if (file.endsWith(".jsonl")) {
+                continue;
+            }
+
+            if (entry.endsWith(".txt")) {
                 try {
-                    const parentDir = path.dirname(filePath);
-                    const session = JsonlParser.parse(filePath, parentDir);
+                    const session = TxtParser.parse(entryPath);
                     sessions.push(session);
                     this.cache.set(session.id, session);
                 } catch (e) {
-                    console.error(`Failed to parse jsonl file ${file}:`, e);
+                    console.error(`Failed to parse txt file ${entry}:`, e);
+                }
+            } else if (entry.endsWith(".jsonl")) {
+                try {
+                    const parentDir = path.dirname(entryPath);
+                    const session = JsonlParser.parse(entryPath, parentDir);
+                    sessions.push(session);
+                    this.cache.set(session.id, session);
+                } catch (e) {
+                    console.error(`Failed to parse jsonl file ${entry}:`, e);
                 }
             }
         }
@@ -72,6 +102,13 @@ export class TranscriptService {
      */
     clearCache(): void {
         this.cache.clear();
+    }
+
+    /**
+     * Get the transcript directory path (for display when no sessions found)
+     */
+    getTranscriptDir(): string {
+        return this.transcriptDir;
     }
 }
 

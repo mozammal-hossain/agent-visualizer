@@ -1,6 +1,4 @@
 node_modules/
-dist/
 *.vsix
 .DS_Store
-webview-ui/dist/
 webview-ui/node_modules/

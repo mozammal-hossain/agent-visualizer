@@ -17,14 +17,25 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<SessionTreeI
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: SessionTreeItem): vscode.TreeItem {
+    getTreeItem(element: SessionTreeItem | vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: SessionTreeItem): SessionTreeItem[] {
+    getChildren(element?: SessionTreeItem): (SessionTreeItem | vscode.TreeItem)[] {
         if (!element) {
-            // Root level - show all sessions
+            // Root level - show all sessions or a helpful message
             const sessions = this.transcriptService.getSessions();
+            if (sessions.length === 0) {
+                const dir = this.transcriptService.getTranscriptDir();
+                const item = new vscode.TreeItem(
+                    "No sessions found",
+                    vscode.TreeItemCollapsibleState.None
+                );
+                item.description = "Click Refresh or check path below";
+                item.tooltip = `Transcripts are read from:\n${dir}\n\n• Open a folder where you've used Cursor chat.\n• Use "Refresh Sessions" (↻) to rescan.`;
+                item.iconPath = new vscode.ThemeIcon("info");
+                return [item];
+            }
             return sessions.map((session) => new SessionTreeItem(session, session));
         }
 

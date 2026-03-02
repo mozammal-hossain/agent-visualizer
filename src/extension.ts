@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { SessionTreeProvider, SessionTreeItem } from "./providers/sessionTreeProvider";
 import { VisualizerPanel } from "./panels/visualizerPanel";
 import { createTranscriptService } from "./services/transcriptService";
+import { PathResolver } from "./services/pathResolver";
 
 let transcriptService: any;
 let treeProvider: SessionTreeProvider;
@@ -67,7 +68,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Watch for transcript folder changes
     if (workspaceFolders.length > 0) {
-        const { PathResolver } = require("./services/pathResolver");
         const transcriptDir = PathResolver.getTranscriptFolderForWorkspace(
             workspacePath
         );

@@ -25,18 +25,19 @@ export class JsonlParser {
         for (const line of lines) {
             try {
                 const json: JsonlMessage = JSON.parse(line);
-                const text = json.message.content[0]?.text || "";
+                const text =
+                    json.message?.content?.[0]?.text ?? "";
 
                 messages.push({
-                    role: json.role,
+                    role: json.role ?? "assistant",
                     text,
                     toolCalls: [],
                 });
 
                 if (json.role === "user" && !firstUserMessage) {
-                    firstUserMessage = text.substring(0, 100);
+                    firstUserMessage = (text || "(no query)").substring(0, 100);
                 }
-            } catch (e) {
+            } catch {
                 // Skip invalid JSON lines
             }
         }

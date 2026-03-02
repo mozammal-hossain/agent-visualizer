@@ -3,6 +3,11 @@
     "displayName": "Agent Visualizer",
     "description": "Visualize Cursor AI agent work: conversation timelines, tool usage analytics, agent hierarchy trees, and reasoning flow diagrams",
     "version": "0.1.0",
+    "publisher": "agent-visualizer",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mozammal-hossain/agent-visualizer.git"
+    },
     "engines": {
         "vscode": "^1.85.0"
     },
@@ -29,6 +34,13 @@
                 {
                     "id": "agentSessions",
                     "name": "Sessions",
+                    "when": "true"
+                }
+            ],
+            "explorer": [
+                {
+                    "id": "agentSessions",
+                    "name": "Agent Visualizer Sessions",
                     "when": "true"
                 }
             ]
@@ -74,6 +86,7 @@
         }
     },
     "scripts": {
+        "postinstall": "cd webview-ui && npm install",
         "vscode:prepublish": "npm run build",
         "build": "npm run build:ext && npm run build:webview",
         "build:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --target=node18",
@@ -83,9 +96,11 @@
         "watch:webview": "cd webview-ui && vite build --watch",
         "dev": "npm run watch",
         "test": "vitest",
-        "lint": "eslint src webview-ui/src"
+        "lint": "eslint src webview-ui/src",
+        "package": "npm run build && npx vsce package --no-dependencies"
     },
     "devDependencies": {
+        "@vscode/vsce": "^3.2.0",
         "@types/node": "^20.0.0",
         "@types/vscode": "^1.85.0",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
