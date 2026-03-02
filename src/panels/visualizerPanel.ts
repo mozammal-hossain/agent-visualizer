@@ -58,7 +58,7 @@ export class VisualizerPanel {
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
         this._panel.webview.onDidReceiveMessage(
-            (e) => this._onMessage(e),
+            (e: unknown) => this._onMessage(e),
             null,
             this._disposables
         );
@@ -74,13 +74,22 @@ export class VisualizerPanel {
         });
     }
 
-    private _onMessage(message: any) {
-        switch (message.command) {
+    private _onMessage(message: unknown) {
+        if (
+            typeof message !== "object" ||
+            message === null ||
+            !("command" in message)
+        ) {
+            return;
+        }
+        const { command, sessionId } = message as { command: string; sessionId?: string };
+        switch (command) {
             case "openSession":
-                const sessionId = message.sessionId;
-                const session = this.transcriptService.getSession(sessionId);
-                if (session) {
-                    this.setSession(session);
+                if (sessionId) {
+                    const session = this.transcriptService.getSession(sessionId);
+                    if (session) {
+                        this.setSession(session);
+                    }
                 }
                 break;
         }
