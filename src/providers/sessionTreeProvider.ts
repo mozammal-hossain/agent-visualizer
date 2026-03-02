@@ -3,12 +3,12 @@ import { Session } from "../parsers/types";
 import { TranscriptService } from "../services/transcriptService";
 import { formatLastToolLabels } from "../utils/toolLabel";
 
-export class SessionTreeProvider implements vscode.TreeDataProvider<SessionTreeItem> {
+export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<
-        SessionTreeItem | undefined | null | void
-    > = new vscode.EventEmitter<SessionTreeItem | undefined | null | void>();
+        vscode.TreeItem | undefined | null | void
+    > = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<
-        SessionTreeItem | undefined | null | void
+        vscode.TreeItem | undefined | null | void
     > = this._onDidChangeTreeData.event;
 
     constructor(private transcriptService: TranscriptService) { }
@@ -18,11 +18,11 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<SessionTreeI
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: SessionTreeItem | vscode.TreeItem): vscode.TreeItem {
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: SessionTreeItem): (SessionTreeItem | vscode.TreeItem)[] {
+    getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
             // Root level - show all sessions or a helpful message
             const sessions = this.transcriptService.getSessions();
@@ -37,13 +37,13 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<SessionTreeI
                 item.iconPath = new vscode.ThemeIcon("info");
                 return [item];
             }
-            return sessions.map((session) => new SessionTreeItem(session, session));
+            return sessions.map((session) => new SessionTreeItem(session));
         }
 
-        if (element.contextValue === "session" && element.session.subagents.length > 0) {
+        if (element instanceof SessionTreeItem && element.session.subagents.length > 0) {
             // Show subagents
             return element.session.subagents.map(
-                (subagent) => new SessionTreeItem(subagent, subagent, true)
+                (subagent) => new SessionTreeItem(subagent, true)
             );
         }
 
@@ -55,7 +55,6 @@ export class SessionTreeItem extends vscode.TreeItem {
     contextValue = "session";
 
     constructor(
-        label: string | vscode.TreeItemLabel,
         public session: Session,
         isSubagent: boolean = false
     ) {
