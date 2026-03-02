@@ -65,12 +65,19 @@ export class SessionTreeItem extends vscode.TreeItem {
 
         super(displayLabel, vscode.TreeItemCollapsibleState.Collapsed);
 
+        const msgCount = session.messages.length;
         const toolCount = session.messages.reduce((sum, m) => sum + m.toolCalls.length, 0);
-        const lastTools = formatLastToolLabels(session, 2);
-        this.description = lastTools
-            ? `${session.messages.length} msgs, ${toolCount} tools · ${lastTools}`
-            : `${session.messages.length} messages, ${toolCount} tool calls`;
-        this.tooltip = `ID: ${session.id}\nFormat: ${session.format}\nFile: ${session.filePath}`;
+        const subagentCount = session.subagents?.length ?? 0;
+        this.description = `${msgCount} msgs · ${toolCount} tools · ${subagentCount} subagents`;
+        this.tooltip = [
+            `Session ID: ${session.id}`,
+            `Messages: ${msgCount}`,
+            `Tool calls: ${toolCount}`,
+            `Subagents: ${subagentCount}`,
+            session.filePath ? `File: ${session.filePath}` : null,
+        ]
+            .filter(Boolean)
+            .join("\n");
         this.command = {
             title: "Open Session",
             command: "agent-visualizer.openSession",

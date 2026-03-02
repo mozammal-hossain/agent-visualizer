@@ -397,6 +397,20 @@ body {
     background: rgba(0, 122, 204, 0.3);
 }
 
+.hierarchy-d3-container {
+    flex: 1;
+    min-height: 280px;
+    overflow: auto;
+}
+
+.hierarchy-d3-svg {
+    display: block;
+}
+
+.hierarchy-d3-node:hover circle {
+    filter: brightness(1.2);
+}
+
 /* Flow */
 .flow-container {
     max-width: 900px;
@@ -501,6 +515,80 @@ body {
 .tools-empty {
     font-size: 12px;
     color: var(--color-text-secondary);
+}
+
+.tools-dashboard {
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tools-stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.tools-charts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.tools-card-bar {
+    flex: 1;
+    min-width: 280px;
+}
+
+.tools-card-donut {
+    flex-shrink: 0;
+}
+
+.tools-card-files {
+    flex: 1 1 100%;
+}
+
+.tools-file-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+}
+
+.tools-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tools-file-item:last-child {
+    border-bottom: none;
+}
+
+.tools-file-path {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-primary);
+}
+
+.tools-bar-chart {
+    display: block;
+}
+
+.tools-bar-label {
+    font-family: inherit;
+}
+
+.tools-bar-value {
+    font-family: inherit;
 }
 
 /* Timeline */

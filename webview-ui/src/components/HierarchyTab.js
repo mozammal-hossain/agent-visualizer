@@ -1,114 +1,84 @@
+import { jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useRef, useMemo } from "react";
 import * as d3 from "d3";
-import { Session } from "../types";
-
-interface HierarchyTabProps {
-    session: Session;
-}
-
-interface HierarchyNodeData {
-    session: Session;
-    children?: HierarchyNodeData[];
-}
-
-function sessionToNode(session: Session): HierarchyNodeData {
+function sessionToNode(session) {
     return {
         session,
-        children:
-            session.subagents?.length > 0
-                ? session.subagents.map(sessionToNode)
-                : undefined,
+        children: session.subagents?.length > 0
+            ? session.subagents.map(sessionToNode)
+            : undefined,
     };
 }
-
 const LABEL_MAX_LEN = 40;
-
-function truncateLabel(text: string): string {
-    if (text.length <= LABEL_MAX_LEN) return text;
+function truncateLabel(text) {
+    if (text.length <= LABEL_MAX_LEN)
+        return text;
     return text.slice(0, LABEL_MAX_LEN - 3) + "...";
 }
-
-function getNodeRadius(messageCount: number): number {
+function getNodeRadius(messageCount) {
     const r = 3 + Math.sqrt(Math.min(messageCount, 100)) * 2;
     return Math.min(r, 24);
 }
-
 const MARGIN = { top: 40, right: 120, bottom: 40, left: 120 };
-
-function HierarchyTab({ session }: HierarchyTabProps) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-
+const NODE_SPACING_X = 180;
+const NODE_SPACING_Y = 80;
+function HierarchyTab({ session }) {
+    const svgRef = useRef(null);
+    const containerRef = useRef(null);
     const hasSubagents = (session.subagents?.length ?? 0) > 0;
-
     const root = useMemo(() => {
-        if (!hasSubagents) return null;
+        if (!hasSubagents)
+            return null;
         const data = sessionToNode(session);
         return d3.hierarchy(data, (d) => d.children ?? []);
     }, [session, hasSubagents]);
-
     useEffect(() => {
-        if (!root || !svgRef.current || !containerRef.current) return;
-
+        if (!root || !svgRef.current || !containerRef.current)
+            return;
         const container = containerRef.current;
         const width = Math.max(container.clientWidth, 400);
         const height = Math.max(container.clientHeight, 300);
-
         const treeLayout = d3
-            .tree<HierarchyNodeData>()
+            .tree()
             .size([width - MARGIN.left - MARGIN.right, height - MARGIN.top - MARGIN.bottom])
             .separation((a, b) => (a.parent === b.parent ? 1.2 : 1.4));
-
         treeLayout(root);
-
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
-
         const g = svg
             .attr("width", width)
             .attr("height", height)
             .append("g")
             .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
-
         const nodes = root.descendants();
         const links = root.links();
-
-        const linkGen = d3
-            .linkVertical<
-                d3.HierarchyPointLink<HierarchyNodeData>,
-                d3.HierarchyPointNode<HierarchyNodeData>
-            >()
-            .x((d) => d.x)
-            .y((d) => d.y);
-
         g.selectAll(".link")
             .data(links)
             .join("path")
             .attr("class", "hierarchy-link")
-            .attr("d", (link) => linkGen(link as d3.HierarchyPointLink<HierarchyNodeData>))
+            .attr("d", d3
+            .linkVertical()
+            .x((d) => d.x)
+            .y((d) => d.y))
             .attr("fill", "none")
             .attr("stroke", "var(--color-border)")
             .attr("stroke-width", 1.5);
-
         const nodeGroup = g
             .selectAll(".node")
             .data(nodes)
             .join("g")
             .attr("class", "hierarchy-d3-node")
             .attr("transform", (d) => `translate(${d.x},${d.y})`);
-
         nodeGroup.each(function (d) {
             const el = d3.select(this);
             const s = d.data.session;
             const msgCount = s.messages.length;
             const r = getNodeRadius(msgCount);
-
             el.append("circle")
                 .attr("r", r)
                 .attr("fill", "var(--color-user-message)")
                 .attr("stroke", "var(--color-border)")
                 .attr("stroke-width", 1.5);
-
             el.append("text")
                 .attr("dy", r + 14)
                 .attr("text-anchor", "middle")
@@ -122,7 +92,6 @@ function HierarchyTab({ session }: HierarchyTabProps) {
                 .attr("fill", "var(--color-bg-primary)")
                 .attr("stroke", "var(--color-bg-primary)")
                 .attr("stroke-width", 3);
-
             el.style("cursor", "pointer").on("click", () => {
                 const api = window.__vscodeApi;
                 if (api) {
@@ -131,20 +100,9 @@ function HierarchyTab({ session }: HierarchyTabProps) {
             });
         });
     }, [root, hasSubagents]);
-
     if (!hasSubagents) {
-        return (
-            <div className="hierarchy-empty">
-                This session does not have any subagents.
-            </div>
-        );
+        return (_jsx("div", { className: "hierarchy-empty", children: "This session does not have any subagents." }));
     }
-
-    return (
-        <div className="hierarchy-container hierarchy-d3-container" ref={containerRef}>
-            <svg ref={svgRef} className="hierarchy-d3-svg" />
-        </div>
-    );
+    return (_jsx("div", { className: "hierarchy-container hierarchy-d3-container", ref: containerRef, children: _jsx("svg", { ref: svgRef, className: "hierarchy-d3-svg" }) }));
 }
-
 export default HierarchyTab;
