@@ -1,4 +1,4 @@
-import { ToolCall } from "../parsers/types";
+import { ToolCall } from "../parsers/types.js";
 
 function basename(p: string): string {
     const normalized = p.replace(/\\/g, "/");

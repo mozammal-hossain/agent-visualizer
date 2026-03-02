@@ -5,8 +5,9 @@ import * as vscode from 'vscode';
 import type { AgentProvider, ProviderContext, NormalizedAgent } from '../types.js';
 import type { ClaudeAgentState, PersistedClaudeAgent } from './state.js';
 import { startFileWatching, readNewLines, ensureProjectScan, reassignAgentToFile } from './fileWatcher.js';
-import type { PostMessage } from './timerManager.js';
-import { cancelWaitingTimer, cancelPermissionTimer } from './timerManager.js';
+import { stopJsonlFileWatching } from '../shared/fileWatcher.js';
+import type { PostMessage } from '../shared/timerManager.js';
+import { cancelWaitingTimer, cancelPermissionTimer } from '../shared/timerManager.js';
 import { WORKSPACE_KEY_AGENTS } from '../../constants.js';
 import { TERMINAL_NAME_PREFIX_CLAUDE } from '../../constants.js';
 import { JSONL_POLL_INTERVAL_MS } from '../../constants.js';
@@ -261,15 +262,9 @@ export class ClaudeCodeProvider implements AgentProvider {
       clearInterval(jp);
       this.jsonlPollTimers.delete(agentId);
     }
-    this.fileWatchers.get(agentId)?.close();
-    this.fileWatchers.delete(agentId);
-    const pt = this.pollingTimers.get(agentId);
-    if (pt) clearInterval(pt);
-    this.pollingTimers.delete(agentId);
-    try {
-      fs.unwatchFile(this.agents.get(agentId)!.jsonlFile);
-    } catch {
-      /* ignore */
+    const agent = this.agents.get(agentId);
+    if (agent) {
+      stopJsonlFileWatching(agentId, agent.jsonlFile, this.fileWatchers, this.pollingTimers);
     }
     cancelWaitingTimer(agentId, this.waitingTimers);
     cancelPermissionTimer(agentId, this.permissionTimers);

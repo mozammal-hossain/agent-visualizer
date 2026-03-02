@@ -3,7 +3,13 @@ import type { AgentProvider, ProviderContext, NormalizedAgent } from '../types.j
 
 const PROVIDER_ID = 'copilot';
 const DISPLAY_NAME = 'GitHub Copilot';
+const SYNTHETIC_AGENT_ID = `${PROVIDER_ID}:default`;
 
+/**
+ * Experimental: GitHub Copilot does not expose local transcript or tool events.
+ * This provider only detects if the Copilot extension is installed and shows
+ * a single placeholder agent (no tool tracking).
+ */
 export class CopilotProvider implements AgentProvider {
   readonly id = PROVIDER_ID;
   readonly displayName = DISPLAY_NAME;
@@ -29,17 +35,37 @@ export class CopilotProvider implements AgentProvider {
   }>();
   readonly onSubagentEvent = this._onSubagentEvent.event;
 
+  private extensionPresent = false;
+
   async activate(_ctx: ProviderContext): Promise<void> {
-    // TODO: output channel or extension API if available
+    const ext = vscode.extensions.getExtension('github.copilot');
+    const extChat = vscode.extensions.getExtension('github.copilot-chat');
+    this.extensionPresent = !!(ext || extChat);
+    if (this.extensionPresent) {
+      this._onAgentCreated.fire({
+        id: SYNTHETIC_AGENT_ID,
+        providerId: PROVIDER_ID,
+        displayName: `${DISPLAY_NAME} (experimental)`,
+      });
+    }
   }
 
-  deactivate(): void {}
+  deactivate(): void {
+    this.extensionPresent = false;
+  }
 
   canLaunch(): boolean {
     return false;
   }
 
   getActiveAgents(): NormalizedAgent[] {
-    return [];
+    if (!this.extensionPresent) return [];
+    return [
+      {
+        id: SYNTHETIC_AGENT_ID,
+        providerId: PROVIDER_ID,
+        displayName: `${DISPLAY_NAME} (experimental)`,
+      },
+    ];
   }
 }

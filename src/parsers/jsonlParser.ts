@@ -1,4 +1,4 @@
-import { Message, ToolCall, Session } from "./types";
+import { Message, ToolCall, Session } from "./types.js";
 import * as fs from "fs";
 import * as path from "path";
 

@@ -129,7 +129,7 @@
         "agent-visualizer.providers.copilot.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Copilot provider"
+          "description": "Enable GitHub Copilot provider (experimental: presence only, no tool tracking)"
         }
       }
     },

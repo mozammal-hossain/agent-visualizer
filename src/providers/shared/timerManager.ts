@@ -1,10 +1,10 @@
-import type { ClaudeAgentState } from './state.js';
+import type { BaseJsonlAgentState } from './state.js';
 import { PERMISSION_TIMER_DELAY_MS } from '../../constants.js';
 
 export type PostMessage = (msg: Record<string, unknown>) => void;
 
-export function clearAgentActivity(
-  agent: ClaudeAgentState | undefined,
+export function clearAgentActivity<T extends BaseJsonlAgentState>(
+  agent: T | undefined,
   agentId: number,
   permissionTimers: Map<number, ReturnType<typeof setTimeout>>,
   postMessage: PostMessage,
@@ -33,10 +33,10 @@ export function cancelWaitingTimer(
   }
 }
 
-export function startWaitingTimer(
+export function startWaitingTimer<T extends BaseJsonlAgentState>(
   agentId: number,
   delayMs: number,
-  agents: Map<number, ClaudeAgentState>,
+  agents: Map<number, T>,
   waitingTimers: Map<number, ReturnType<typeof setTimeout>>,
   postMessage: PostMessage,
 ): void {
@@ -63,9 +63,9 @@ export function cancelPermissionTimer(
   }
 }
 
-export function startPermissionTimer(
+export function startPermissionTimer<T extends BaseJsonlAgentState>(
   agentId: number,
-  agents: Map<number, ClaudeAgentState>,
+  agents: Map<number, T>,
   permissionTimers: Map<number, ReturnType<typeof setTimeout>>,
   permissionExemptTools: Set<string>,
   postMessage: PostMessage,

@@ -2,9 +2,9 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
-import { Session } from "../parsers/types";
-import { TranscriptService } from "../services/transcriptService";
-import { deriveStatus } from "../utils/activityStatus";
+import { Session } from "../parsers/types.js";
+import { TranscriptService } from "../services/transcriptService.js";
+import { deriveStatus } from "../utils/activityStatus.js";
 
 const VALID_TABS = new Set(["overview", "timeline", "hierarchy", "flow", "tools"]);
 const SESSION_ID_PATTERN = /^[0-9a-f-]{8,36}$/i;

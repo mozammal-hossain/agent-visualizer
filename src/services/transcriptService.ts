@@ -1,10 +1,10 @@
 /// <reference path="../global.d.ts" />
 import * as fs from "fs";
 import * as path from "path";
-import { Session } from "../parsers/types";
-import { TxtParser } from "../parsers/txtParser";
-import { JsonlParser } from "../parsers/jsonlParser";
-import { PathResolver } from "./pathResolver";
+import { Session } from "../parsers/types.js";
+import { TxtParser } from "../parsers/txtParser.js";
+import { JsonlParser } from "../parsers/jsonlParser.js";
+import { PathResolver } from "./pathResolver.js";
 
 export class TranscriptService {
     private cache: Map<string, Session> = new Map();

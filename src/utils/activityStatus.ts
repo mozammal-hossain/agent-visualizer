@@ -1,4 +1,4 @@
-import { Session } from "../parsers/types";
+import { Session } from "../parsers/types.js";
 
 export type SessionStatus = "working" | "waiting" | "idle";
 

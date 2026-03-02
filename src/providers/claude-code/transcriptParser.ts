@@ -1,16 +1,13 @@
 import * as path from 'path';
 import type { ClaudeAgentState } from './state.js';
 import {
-  cancelWaitingTimer,
   startWaitingTimer,
-  clearAgentActivity,
   startPermissionTimer,
-  cancelPermissionTimer,
   type PostMessage,
-} from './timerManager.js';
+} from '../shared/timerManager.js';
+import { processAnthropicTranscriptLine } from '../shared/anthropicParser.js';
 import {
   TOOL_DONE_DELAY_MS,
-  TEXT_IDLE_DELAY_MS,
   BASH_COMMAND_DISPLAY_MAX_LENGTH,
   TASK_DESCRIPTION_DISPLAY_MAX_LENGTH,
 } from '../../constants.js';
@@ -64,104 +61,22 @@ export function processTranscriptLine(
   const agent = agents.get(agentId);
   if (!agent) return;
   try {
-    const record = JSON.parse(line) as Record<string, unknown> & {
-      message?: { content?: unknown };
-    };
+    const record = JSON.parse(line) as Record<string, unknown>;
 
-    if (record.type === 'assistant' && Array.isArray(record.message?.content)) {
-      const blocks = record.message.content as Array<{
-        type: string;
-        id?: string;
-        name?: string;
-        input?: Record<string, unknown>;
-      }>;
-      const hasToolUse = blocks.some((b) => b.type === 'tool_use');
+    if (record.type === 'assistant' || record.type === 'user' || (record.type === 'system' && record.subtype === 'turn_duration')) {
+      processAnthropicTranscriptLine(agentId, line, {
+        formatToolStatus,
+        permissionExemptTools: PERMISSION_EXEMPT_TOOLS,
+        agents,
+        waitingTimers,
+        permissionTimers,
+        postMessage,
+      });
+      return;
+    }
 
-      if (hasToolUse) {
-        cancelWaitingTimer(agentId, waitingTimers);
-        agent.isWaiting = false;
-        agent.hadToolsInTurn = true;
-        postMessage({ type: 'agentStatus', id: agentId, status: 'active' });
-        let hasNonExemptTool = false;
-        for (const block of blocks) {
-          if (block.type === 'tool_use' && block.id) {
-            const toolName = block.name || '';
-            const status = formatToolStatus(toolName, block.input || {});
-            agent.activeToolIds.add(block.id);
-            agent.activeToolStatuses.set(block.id, status);
-            agent.activeToolNames.set(block.id, toolName);
-            if (!PERMISSION_EXEMPT_TOOLS.has(toolName)) {
-              hasNonExemptTool = true;
-            }
-            postMessage({
-              type: 'agentToolStart',
-              id: agentId,
-              toolId: block.id,
-              status,
-            });
-          }
-        }
-        if (hasNonExemptTool) {
-          startPermissionTimer(agentId, agents, permissionTimers, PERMISSION_EXEMPT_TOOLS, postMessage);
-        }
-      } else if (blocks.some((b) => b.type === 'text') && !agent.hadToolsInTurn) {
-        startWaitingTimer(agentId, TEXT_IDLE_DELAY_MS, agents, waitingTimers, postMessage);
-      }
-    } else if (record.type === 'progress') {
+    if (record.type === 'progress') {
       processProgressRecord(agentId, record, agents, waitingTimers, permissionTimers, postMessage);
-    } else if (record.type === 'user') {
-      const content = (record.message as { content?: unknown } | undefined)?.content;
-      if (Array.isArray(content)) {
-        const blocks = content as Array<{ type: string; tool_use_id?: string }>;
-        const hasToolResult = blocks.some((b) => b.type === 'tool_result');
-        if (hasToolResult) {
-          for (const block of blocks) {
-            if (block.type === 'tool_result' && block.tool_use_id) {
-              const completedToolId = block.tool_use_id;
-              if (agent.activeToolNames.get(completedToolId) === 'Task') {
-                agent.activeSubagentToolIds.delete(completedToolId);
-                agent.activeSubagentToolNames.delete(completedToolId);
-                postMessage({ type: 'subagentClear', id: agentId, parentToolId: completedToolId });
-              }
-              agent.activeToolIds.delete(completedToolId);
-              agent.activeToolStatuses.delete(completedToolId);
-              agent.activeToolNames.delete(completedToolId);
-              const toolId = completedToolId;
-              setTimeout(() => {
-                postMessage({ type: 'agentToolDone', id: agentId, toolId });
-              }, TOOL_DONE_DELAY_MS);
-            }
-          }
-          if (agent.activeToolIds.size === 0) {
-            agent.hadToolsInTurn = false;
-          }
-        } else {
-          cancelWaitingTimer(agentId, waitingTimers);
-          clearAgentActivity(agent, agentId, permissionTimers, postMessage);
-          agent.hadToolsInTurn = false;
-        }
-      } else if (typeof content === 'string' && content.trim()) {
-        cancelWaitingTimer(agentId, waitingTimers);
-        clearAgentActivity(agent, agentId, permissionTimers, postMessage);
-        agent.hadToolsInTurn = false;
-      }
-    } else if (record.type === 'system' && record.subtype === 'turn_duration') {
-      cancelWaitingTimer(agentId, waitingTimers);
-      cancelPermissionTimer(agentId, permissionTimers);
-
-      if (agent.activeToolIds.size > 0) {
-        agent.activeToolIds.clear();
-        agent.activeToolStatuses.clear();
-        agent.activeToolNames.clear();
-        agent.activeSubagentToolIds.clear();
-        agent.activeSubagentToolNames.clear();
-        postMessage({ type: 'agentToolsClear', id: agentId });
-      }
-
-      agent.isWaiting = true;
-      agent.permissionSent = false;
-      agent.hadToolsInTurn = false;
-      postMessage({ type: 'agentStatus', id: agentId, status: 'waiting' });
     }
   } catch {
     /* ignore malformed lines */
@@ -260,7 +175,7 @@ function processProgressRecord(
             parentToolId,
             toolId,
           });
-        }, 300);
+        }, TOOL_DONE_DELAY_MS);
       }
     }
     let stillHasNonExempt = false;

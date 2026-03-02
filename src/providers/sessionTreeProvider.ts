@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { Session } from "../parsers/types";
-import { TranscriptService } from "../services/transcriptService";
+import { Session } from "../parsers/types.js";
+import { TranscriptService } from "../services/transcriptService.js";
 
 export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<

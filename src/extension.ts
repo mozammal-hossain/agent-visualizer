@@ -9,10 +9,10 @@ import { ClineProvider } from "./providers/cline/index.js";
 import { ContinueProvider } from "./providers/continue/index.js";
 import { CopilotProvider } from "./providers/copilot/index.js";
 import { VIEW_ID, COMMAND_SHOW_PANEL, COMMAND_EXPORT_DEFAULT_LAYOUT } from "./constants.js";
-import { SessionTreeProvider, SessionTreeItem } from "./providers/sessionTreeProvider";
-import { VisualizerPanel } from "./panels/visualizerPanel";
-import { TranscriptService, createTranscriptService } from "./services/transcriptService";
-import { PathResolver } from "./services/pathResolver";
+import { SessionTreeProvider, SessionTreeItem } from "./providers/sessionTreeProvider.js";
+import { VisualizerPanel } from "./panels/visualizerPanel.js";
+import { TranscriptService, createTranscriptService } from "./services/transcriptService.js";
+import { PathResolver } from "./services/pathResolver.js";
 
 let transcriptService: TranscriptService;
 let treeProvider: SessionTreeProvider;

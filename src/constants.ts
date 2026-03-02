@@ -40,3 +40,5 @@ export const WORKSPACE_KEY_AGENTS = 'agent-visualizer.agents';
 export const WORKSPACE_KEY_AGENT_SEATS = 'agent-visualizer.agentSeats';
 export const WORKSPACE_KEY_LAYOUT = 'agent-visualizer.layout';
 export const TERMINAL_NAME_PREFIX_CLAUDE = 'Claude Code';
+export const TERMINAL_NAME_PREFIX_CODEX = 'Codex CLI';
+export const CODEX_SESSIONS_DIR = '.codex/sessions';
