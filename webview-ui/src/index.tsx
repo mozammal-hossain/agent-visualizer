@@ -23,26 +23,27 @@ function Root() {
     const [baseTheme, setBaseTheme] = useState<ResolvedTheme>("dark");
 
     useEffect(() => {
-        const rawSession = (window as any).__INITIAL_SESSION__;
+        const rawSession = window.__INITIAL_SESSION__;
         const initialSession: Session | null =
+            rawSession !== undefined &&
             rawSession !== null &&
             typeof rawSession === "object" &&
             typeof rawSession.id === "string" &&
             Array.isArray(rawSession.messages)
-                ? (rawSession as Session)
+                ? rawSession
                 : null;
         if (initialSession) {
             setSession(initialSession);
             prevMessageCountRef.current = initialSession.messages?.length ?? 0;
         }
-        playSoundEnabledRef.current = (window as any).__PLAY_SOUND_ENABLED__ === true;
+        playSoundEnabledRef.current = window.__PLAY_SOUND_ENABLED__ === true;
         const api =
-            typeof (window as any).acquireVsCodeApi === "function"
-                ? (window as any).acquireVsCodeApi()
+            typeof window.acquireVsCodeApi === "function"
+                ? window.acquireVsCodeApi()
                 : null;
-        (window as any).__vscodeApi = api;
+        window.__vscodeApi = api;
 
-        const initialTheme = (window as any).__INITIAL_THEME__ === "light" ? "light" : "dark";
+        const initialTheme = window.__INITIAL_THEME__ === "light" ? "light" : "dark";
         setBaseTheme(initialTheme);
 
         if (api && typeof api.getState === "function") {
@@ -58,8 +59,24 @@ function Root() {
 
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
+            if (
+                typeof message !== "object" ||
+                message === null ||
+                typeof message.type !== "string"
+            ) {
+                return;
+            }
             if (message.type === "sessionData") {
-                const newSession = message.data as Session;
+                const candidate = message.data;
+                if (
+                    typeof candidate !== "object" ||
+                    candidate === null ||
+                    typeof candidate.id !== "string" ||
+                    !Array.isArray(candidate.messages)
+                ) {
+                    return;
+                }
+                const newSession = candidate as Session;
                 const prevCount = prevMessageCountRef.current;
                 const newCount = newSession.messages?.length ?? 0;
                 if (
@@ -91,9 +108,9 @@ function Root() {
 
     const handleThemeModeChange = (next: ThemeMode) => {
         setThemeMode(next);
-        const api = (window as any).__vscodeApi;
-        if (api && typeof api.setState === "function") {
-            const prev = (typeof api.getState === "function" ? api.getState() : {}) ?? {};
+        const api = window.__vscodeApi;
+        if (api) {
+            const prev = (api.getState() as Record<string, unknown> | undefined) ?? {};
             api.setState({ ...prev, themeMode: next });
         }
     };

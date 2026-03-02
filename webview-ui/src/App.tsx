@@ -19,7 +19,7 @@ interface AppProps {
 }
 
 function getInitialTab(): TabId {
-    const t = (window as any).__INITIAL_TAB__;
+    const t = window.__INITIAL_TAB__;
     if (t === "overview" || t === "timeline" || t === "hierarchy" || t === "tools" || t === "flow") {
         return t;
     }
@@ -37,8 +37,8 @@ function App({
 
     const setActiveTabAndPersist = (tab: TabId) => {
         setActiveTab(tab);
-        const api = (window as any).__vscodeApi;
-        if (api?.postMessage) {
+        const api = window.__vscodeApi;
+        if (api) {
             api.postMessage({ command: "setActiveTab", tab });
         }
     };

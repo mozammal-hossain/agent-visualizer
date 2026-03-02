@@ -16,8 +16,8 @@ function TreeNode({ session, depth }: TreeNodeProps) {
     const subagents = session.subagents ?? [];
 
     const openSession = () => {
-        const api = (window as any).__vscodeApi;
-        if (api?.postMessage) {
+        const api = window.__vscodeApi;
+        if (api) {
             api.postMessage({ command: "openSession", sessionId: session.id });
         }
     };

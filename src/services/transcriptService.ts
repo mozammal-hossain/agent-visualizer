@@ -138,14 +138,19 @@ export class TranscriptService {
      * Re-parse a single transcript file and update cache. Used for live tail of the open session.
      */
     parseSessionFile(filePath: string, format: "txt" | "jsonl"): Session | null {
+        const resolved = path.resolve(filePath);
+        if (!resolved.startsWith(this.transcriptDir + path.sep) && resolved !== this.transcriptDir) {
+            console.error(`Refusing to parse file outside transcript directory: ${filePath}`);
+            return null;
+        }
         try {
             if (format === "txt") {
-                const session = TxtParser.parse(filePath);
+                const session = TxtParser.parse(resolved);
                 this.cache.set(session.id, session);
                 return session;
             }
-            const parentDir = path.dirname(filePath);
-            const session = JsonlParser.parse(filePath, parentDir);
+            const parentDir = path.dirname(resolved);
+            const session = JsonlParser.parse(resolved, parentDir);
             this.cache.set(session.id, session);
             return session;
         } catch (e) {

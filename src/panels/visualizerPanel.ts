@@ -56,7 +56,7 @@ export class VisualizerPanel {
 
         const panel = vscode.window.createWebviewPanel(
             "agentVisualizer",
-            `Session: ${session.firstUserMessage}`,
+            `Session: ${session.firstUserMessage.substring(0, 60)}`,
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -264,7 +264,7 @@ export class VisualizerPanel {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${cspSource}; style-src ${cspSource}; img-src ${cspSource} data:; font-src ${cspSource};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${cspSource}; style-src ${cspSource}; img-src ${cspSource} data:; font-src ${cspSource}; connect-src 'none';">
     <title>Agent Visualizer</title>
     <link rel="stylesheet" href="${styleUri}">
 </head>
