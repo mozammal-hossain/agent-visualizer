@@ -8,12 +8,13 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({ session }: OverviewTabProps) {
-    const totalMessages = session.messages.length;
-    const totalToolCalls = session.messages.reduce(
-        (sum, m) => sum + m.toolCalls.length,
+    const messages = session.messages ?? [];
+    const totalMessages = messages.length;
+    const totalToolCalls = messages.reduce(
+        (sum, m) => sum + (m.toolCalls?.length ?? 0),
         0
     );
-    const userMessages = session.messages.filter((m) => m.role === "user").length;
+    const userMessages = messages.filter((m) => m.role === "user").length;
     const assistantMessages = totalMessages - userMessages;
     const subagentCount = session.subagents?.length ?? 0;
 

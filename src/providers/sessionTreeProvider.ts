@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { Session } from "../parsers/types";
 import { TranscriptService } from "../services/transcriptService";
-import { formatLastToolLabels } from "../utils/toolLabel";
 
 export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<
@@ -11,7 +10,18 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
         vscode.TreeItem | undefined | null | void
     > = this._onDidChangeTreeData.event;
 
-    constructor(private transcriptService: TranscriptService) { }
+    private _filterPattern: string = "";
+
+    constructor(private transcriptService: TranscriptService) {}
+
+    setFilter(pattern: string): void {
+        this._filterPattern = (pattern ?? "").trim();
+        this._onDidChangeTreeData.fire();
+    }
+
+    getFilterPattern(): string {
+        return this._filterPattern;
+    }
 
     refresh(): void {
         this.transcriptService.clearCache();
@@ -24,7 +34,7 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
 
     getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (!element) {
-            // Root level - show all sessions or a helpful message
+            // Root level - show sessions (filtered if pattern set) or a helpful message
             const sessions = this.transcriptService.getSessions();
             if (sessions.length === 0) {
                 const dir = this.transcriptService.getTranscriptDir();
@@ -37,12 +47,34 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<vscode.TreeI
                 item.iconPath = new vscode.ThemeIcon("info");
                 return [item];
             }
-            return sessions.map((session) => new SessionTreeItem(session));
+            let filtered = sessions;
+            if (this._filterPattern) {
+                const lower = this._filterPattern.toLowerCase();
+                filtered = sessions.filter(
+                    (s) =>
+                        (s.firstUserMessage ?? "")
+                            .toLowerCase()
+                            .includes(lower) ||
+                        (s.id ?? "")
+                            .toLowerCase()
+                            .includes(lower)
+                );
+            }
+            if (filtered.length === 0) {
+                const item = new vscode.TreeItem(
+                    "No matching sessions",
+                    vscode.TreeItemCollapsibleState.None
+                );
+                item.description = `Filter: "${this._filterPattern}"`;
+                item.tooltip = "Use 'Clear Filter' or change the search text.";
+                item.iconPath = new vscode.ThemeIcon("search");
+                return [item];
+            }
+            return filtered.map((session) => new SessionTreeItem(session));
         }
 
-        if (element instanceof SessionTreeItem && element.session.subagents.length > 0) {
-            // Show subagents
-            return element.session.subagents.map(
+        if (element instanceof SessionTreeItem && (element.session.subagents?.length ?? 0) > 0) {
+            return (element.session.subagents ?? []).map(
                 (subagent) => new SessionTreeItem(subagent, true)
             );
         }

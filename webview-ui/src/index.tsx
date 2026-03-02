@@ -1,17 +1,42 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Component, useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import { Session } from "./types";
 import { SessionStatus } from "./utils/activityStatus";
 import { playTurnCompleteChime } from "./utils/sound";
 import "./style.css";
 import App from "./App";
-import { ThemeMode, ResolvedTheme } from "./theme";
+
+class ErrorBoundary extends Component<
+    { children: React.ReactNode },
+    { hasError: boolean; error?: Error }
+> {
+    state = { hasError: false, error: undefined as Error | undefined };
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    render() {
+        if (this.state.hasError && this.state.error) {
+            return (
+                <div className="loading" style={{ flexDirection: "column", gap: "8px" }}>
+                    <strong>Something went wrong</strong>
+                    <span style={{ fontSize: "12px", maxWidth: "80%", textAlign: "center" }}>
+                        {this.state.error.message}
+                    </span>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 function isAssistantTurnComplete(session: Session): boolean {
-    if (session.messages.length === 0) return false;
+    if ((session.messages?.length ?? 0) === 0) return false;
     const last = session.messages[session.messages.length - 1];
     if (last.role !== "assistant") return false;
-    if (last.toolCalls.length === 0) return true;
-    return last.toolCalls.every((tc) => tc.hasResult);
+    if ((last.toolCalls?.length ?? 0) === 0) return true;
+    return (last.toolCalls ?? []).every((tc) => tc.hasResult);
 }
 
 function Root() {
@@ -19,8 +44,6 @@ function Root() {
     const [statusOverride, setStatusOverride] = useState<SessionStatus | null>(null);
     const prevMessageCountRef = useRef<number>(0);
     const playSoundEnabledRef = useRef<boolean>(false);
-    const [themeMode, setThemeMode] = useState<ThemeMode>("auto");
-    const [baseTheme, setBaseTheme] = useState<ResolvedTheme>("dark");
 
     useEffect(() => {
         const rawSession = window.__INITIAL_SESSION__;
@@ -42,20 +65,6 @@ function Root() {
                 ? window.acquireVsCodeApi()
                 : null;
         window.__vscodeApi = api;
-
-        const initialTheme = window.__INITIAL_THEME__ === "light" ? "light" : "dark";
-        setBaseTheme(initialTheme);
-
-        if (api && typeof api.getState === "function") {
-            const persisted = api.getState() as { themeMode?: ThemeMode } | undefined;
-            if (
-                persisted?.themeMode === "auto" ||
-                persisted?.themeMode === "light" ||
-                persisted?.themeMode === "dark"
-            ) {
-                setThemeMode(persisted.themeMode);
-            }
-        }
 
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
@@ -103,26 +112,20 @@ function Root() {
         return <div className="loading">Loading session...</div>;
     }
 
-    const resolvedTheme: ResolvedTheme =
-        themeMode === "auto" ? baseTheme : themeMode;
-
-    const handleThemeModeChange = (next: ThemeMode) => {
-        setThemeMode(next);
-        const api = window.__vscodeApi;
-        if (api) {
-            const prev = (api.getState() as Record<string, unknown> | undefined) ?? {};
-            api.setState({ ...prev, themeMode: next });
-        }
-    };
-
     return (
         <App
             session={session}
             statusOverride={statusOverride}
-            themeMode={themeMode}
-            resolvedTheme={resolvedTheme}
-            onThemeModeChange={handleThemeModeChange}
         />
+    );
+}
+
+const rootEl = document.getElementById("root");
+if (rootEl) {
+    createRoot(rootEl).render(
+        <ErrorBoundary>
+            <Root />
+        </ErrorBoundary>
     );
 }
 

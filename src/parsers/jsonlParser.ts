@@ -17,17 +17,30 @@ interface JsonlMessage {
 
 export class JsonlParser {
     /**
-     * Parse a .jsonl format transcript file
+     * Parse a .jsonl format transcript file. Returns null on read or parse failure.
      */
-    static parse(filePath: string, parentDir: string, depth: number = 0): Session {
-        const stat = fs.statSync(filePath);
+    static parse(filePath: string, parentDir: string, depth: number = 0): Session | null {
+        let stat: ReturnType<typeof fs.statSync>;
+        try {
+            stat = fs.statSync(filePath);
+        } catch (e) {
+            console.warn(`JsonlParser: could not stat file ${filePath}:`, e);
+            return null;
+        }
         if (stat.size > MAX_FILE_SIZE_BYTES) {
-            throw new Error(
+            console.warn(
                 `Transcript file too large to parse: ${stat.size} bytes (limit: ${MAX_FILE_SIZE_BYTES})`
             );
+            return null;
         }
 
-        const content = fs.readFileSync(filePath, "utf-8");
+        let content: string;
+        try {
+            content = fs.readFileSync(filePath, "utf-8");
+        } catch (e) {
+            console.warn(`JsonlParser: could not read file ${filePath}:`, e);
+            return null;
+        }
         const lines = content.split("\n").filter((line) => line.trim());
         const messages: Message[] = [];
         let firstUserMessage = "";
@@ -48,7 +61,7 @@ export class JsonlParser {
                     firstUserMessage = (text || "(no query)").substring(0, 100);
                 }
             } catch {
-                // Skip invalid JSON lines
+                console.warn("JsonlParser: skipping malformed JSON line");
             }
         }
 
@@ -68,7 +81,9 @@ export class JsonlParser {
                 for (const file of subagentFiles) {
                     const subagentPath = path.join(subagentsDir, file);
                     const subagentSession = this.parse(subagentPath, subagentsDir, depth + 1);
-                    subagents.push(subagentSession);
+                    if (subagentSession) {
+                        subagents.push(subagentSession);
+                    }
                 }
             }
         }

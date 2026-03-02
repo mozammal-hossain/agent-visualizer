@@ -43,42 +43,34 @@ export class TranscriptService {
                     const firstJsonl = dirFiles.find((f: string) => f.endsWith(".jsonl"));
                     if (firstJsonl) {
                         const fallbackPath = path.join(entryPath, firstJsonl);
-                        try {
-                            const session = JsonlParser.parse(fallbackPath, entryPath);
+                        const session = JsonlParser.parse(fallbackPath, entryPath);
+                        if (session) {
                             sessions.push(session);
                             this.cache.set(session.id, session);
-                        } catch (e) {
-                            console.error(`Failed to parse jsonl in dir ${entry}:`, e);
                         }
                     }
                 } else {
-                    try {
-                        const session = JsonlParser.parse(jsonlPath, entryPath);
+                    const session = JsonlParser.parse(jsonlPath, entryPath);
+                    if (session) {
                         sessions.push(session);
                         this.cache.set(session.id, session);
-                    } catch (e) {
-                        console.error(`Failed to parse jsonl in dir ${entry}:`, e);
                     }
                 }
                 continue;
             }
 
             if (entry.endsWith(".txt")) {
-                try {
-                    const session = TxtParser.parse(entryPath);
+                const session = TxtParser.parse(entryPath);
+                if (session) {
                     sessions.push(session);
                     this.cache.set(session.id, session);
-                } catch (e) {
-                    console.error(`Failed to parse txt file ${entry}:`, e);
                 }
             } else if (entry.endsWith(".jsonl")) {
-                try {
-                    const parentDir = path.dirname(entryPath);
-                    const session = JsonlParser.parse(entryPath, parentDir);
+                const parentDir = path.dirname(entryPath);
+                const session = JsonlParser.parse(entryPath, parentDir);
+                if (session) {
                     sessions.push(session);
                     this.cache.set(session.id, session);
-                } catch (e) {
-                    console.error(`Failed to parse jsonl file ${entry}:`, e);
                 }
             }
         }
@@ -146,13 +138,19 @@ export class TranscriptService {
         try {
             if (format === "txt") {
                 const session = TxtParser.parse(resolved);
-                this.cache.set(session.id, session);
-                return session;
+                if (session) {
+                    this.cache.set(session.id, session);
+                    return session;
+                }
+                return null;
             }
             const parentDir = path.dirname(resolved);
             const session = JsonlParser.parse(resolved, parentDir);
-            this.cache.set(session.id, session);
-            return session;
+            if (session) {
+                this.cache.set(session.id, session);
+                return session;
+            }
+            return null;
         } catch (e) {
             console.error(`Failed to re-parse transcript ${filePath}:`, e);
             return null;

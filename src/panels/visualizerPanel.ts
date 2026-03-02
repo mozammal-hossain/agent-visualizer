@@ -248,13 +248,6 @@ export class VisualizerPanel {
         const lastActiveTab =
             this._workspaceState.get<string>(STATE_KEY_LAST_ACTIVE_TAB) ?? "overview";
 
-        const themeKind = vscode.window.activeColorTheme.kind;
-        const initialTheme =
-            themeKind === vscode.ColorThemeKind.Light ||
-            themeKind === vscode.ColorThemeKind.HighContrastLight
-                ? "light"
-                : "dark";
-
         const nonce = crypto.randomBytes(16).toString("base64");
         const cspSource = this._panel.webview.cspSource;
         const safeSession = stripSessionFilePaths(session);
@@ -274,7 +267,6 @@ export class VisualizerPanel {
       window.__INITIAL_SESSION__ = ${safeJsonInScript(safeSession)};
       window.__PLAY_SOUND_ENABLED__ = ${safeJsonInScript(playSound)};
       window.__INITIAL_TAB__ = ${safeJsonInScript(lastActiveTab)};
-      window.__INITIAL_THEME__ = ${safeJsonInScript(initialTheme)};
     </script>
     <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>

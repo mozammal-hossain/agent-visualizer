@@ -236,8 +236,8 @@ The webview panel is a React application with four tabbed views:
 
 - `viewsContainers.activitybar`: Custom "Agent Visualizer" icon in the sidebar
 - `views`: "agentSessions" tree view in the custom container
-- `commands`: `agent-visualizer.openSession`, `agent-visualizer.refresh`, `agent-visualizer.openPanel`
-- `menus`: Context menu on tree items to open or copy session ID
+- `commands`: `agent-visualizer.openSession`, `agent-visualizer.refresh`, `agent-visualizer.copySessionId`, `agent-visualizer.filterSessions`, `agent-visualizer.clearFilter`
+- `menus`: Tree view title (Filter, Refresh, Clear Filter), context menu on tree items to open or copy session ID
 
 ---
 
@@ -254,7 +254,7 @@ Scaffold the extension, implement parsers for both formats, build the sidebar tr
 - SessionTreeProvider (sidebar)
 - Webview panel with Timeline component
 
-### Phase 2 -- Analytics
+### Phase 2 -- Analytics (Complete)
 
 Add the Agent Hierarchy and Tool Usage Dashboard views to the webview. Add session statistics in tree view tooltips and descriptions.
 
@@ -263,14 +263,14 @@ Add the Agent Hierarchy and Tool Usage Dashboard views to the webview. Add sessi
 - ToolUsage dashboard (charts + file list)
 - Enhanced tree view with stats
 
-### Phase 3 -- Polish
+### Phase 3 -- Polish (Complete)
 
-Add the Flow Diagram view, real-time file watching, search/filter in sidebar, and polish the UI with animations, VS Code theme integration, and responsive layout.
+Add the Flow Diagram view, real-time file watching, search/filter in sidebar, and polish the UI with VS Code theme integration and robust error handling.
 
 **Deliverables:**
-- FlowDiagram component (directed graph)
-- FileSystemWatcher integration
-- Search/filter in sidebar
-- Dark/light theme support
-- Error handling and edge cases
-- Extension icon and marketplace metadata
+- FlowDiagram component (D3 force-directed graph with zoom/pan, node tooltips, tool branching)
+- FileSystemWatcher integration (already in Phase 1)
+- Search/filter in sidebar (Filter Sessions and Clear Filter commands; filter by title or session ID)
+- VS Code native theme (webview uses `--vscode-*` CSS variables; follows editor light/dark/high-contrast)
+- Error handling and edge cases (React ErrorBoundary, parser try/catch, defensive `session.messages` / `subagents` guards)
+- Extension icon and marketplace metadata (keywords, galleryBanner, license, preview flag)

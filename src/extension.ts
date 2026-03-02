@@ -83,9 +83,33 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    const filterSessionsCommand = vscode.commands.registerCommand(
+        "agent-visualizer.filterSessions",
+        async () => {
+            const current = treeProvider.getFilterPattern();
+            const value = await vscode.window.showInputBox({
+                prompt: "Filter sessions by title or session ID (case-insensitive)",
+                value: current,
+                placeHolder: "e.g. fix bug",
+            });
+            if (value !== undefined) {
+                treeProvider.setFilter(value);
+            }
+        }
+    );
+
+    const clearFilterCommand = vscode.commands.registerCommand(
+        "agent-visualizer.clearFilter",
+        () => {
+            treeProvider.setFilter("");
+        }
+    );
+
     context.subscriptions.push(openSessionCommand);
     context.subscriptions.push(refreshCommand);
     context.subscriptions.push(copySessionIdCommand);
+    context.subscriptions.push(filterSessionsCommand);
+    context.subscriptions.push(clearFilterCommand);
 
     // Watch for transcript folder changes
     if (workspaceFolders.length > 0) {

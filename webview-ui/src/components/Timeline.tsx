@@ -25,13 +25,15 @@ function getSubagentForTaskCall(
     msgIndex: number,
     toolIndex: number
 ): Session | null {
+    const messages = session.messages ?? [];
     let taskCount = 0;
-    for (let i = 0; i < session.messages.length; i++) {
-        const msg = session.messages[i];
-        for (let j = 0; j < msg.toolCalls.length; j++) {
-            if (isTaskTool(msg.toolCalls[j])) {
+    for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i];
+        const toolCalls = msg.toolCalls ?? [];
+        for (let j = 0; j < toolCalls.length; j++) {
+            if (isTaskTool(toolCalls[j])) {
                 if (i === msgIndex && j === toolIndex) {
-                    return session.subagents?.[taskCount] ?? null;
+                    return (session.subagents ?? [])[taskCount] ?? null;
                 }
                 taskCount++;
             }
@@ -58,7 +60,7 @@ function buildSteps(session: Session): TimelineStep[] {
         allMessages.push(...assistants);
 
         const toolCallCount = allMessages.reduce(
-            (sum, m) => sum + m.toolCalls.length,
+            (sum, m) => sum + (m.toolCalls?.length ?? 0),
             0
         );
 
@@ -73,7 +75,7 @@ function buildSteps(session: Session): TimelineStep[] {
         });
     };
 
-    session.messages.forEach((message, index) => {
+    (session.messages ?? []).forEach((message, index) => {
         if (message.role === "user") {
             if (currentUser || assistants.length > 0) {
                 flushStep(index - 1);
@@ -94,7 +96,7 @@ function buildSteps(session: Session): TimelineStep[] {
     });
 
     if (currentUser || assistants.length > 0) {
-        flushStep(session.messages.length - 1);
+        flushStep((session.messages?.length ?? 1) - 1);
     }
 
     return steps;
@@ -231,9 +233,9 @@ function Timeline({ session }: TimelineProps) {
                                                 <div className="message-text">{message.text}</div>
                                             </div>
 
-                                            {message.toolCalls.length > 0 && (
+                                            {(message.toolCalls?.length ?? 0) > 0 && (
                                                 <div className="tool-calls-container">
-                                                    {message.toolCalls.map((toolCall, toolIndex) => {
+                                                    {(message.toolCalls ?? []).map((toolCall, toolIndex) => {
                                                         const globalKey = `${globalIndex}-${toolIndex}`;
                                                         const isToolExpanded =
                                                             expandedToolCalls.has(globalKey);

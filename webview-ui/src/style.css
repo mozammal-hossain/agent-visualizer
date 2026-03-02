@@ -1,11 +1,11 @@
 :root {
-    --color-bg-primary: #1e1e1e;
-    --color-bg-secondary: #252526;
-    --color-text-primary: #cccccc;
-    --color-text-secondary: #858585;
-    --color-border: #3e3e42;
-    --color-user-message: #0e639c;
-    --color-assistant-message: #3c3c3c;
+    --color-bg-primary: var(--vscode-editor-background, #1e1e1e);
+    --color-bg-secondary: var(--vscode-sideBar-background, #252526);
+    --color-text-primary: var(--vscode-editor-foreground, #cccccc);
+    --color-text-secondary: var(--vscode-descriptionForeground, #858585);
+    --color-border: var(--vscode-panel-border, #3e3e42);
+    --color-user-message: var(--vscode-button-background, #0e639c);
+    --color-assistant-message: var(--vscode-editor-inactiveSelectionBackground, #3c3c3c);
     --color-tool-icon: #4ec9b0;
     --color-success: #4ec9b0;
     --color-warning: #dcdcaa;
@@ -43,20 +43,6 @@ body {
     color: var(--color-text-primary);
 }
 
-.theme-light {
-    --color-bg-primary: #ffffff;
-    --color-bg-secondary: #f3f3f3;
-    --color-text-primary: #1e1e1e;
-    --color-text-secondary: #555555;
-    --color-border: #d4d4d4;
-    --color-user-message: #0e639c;
-    --color-assistant-message: #ffffff;
-}
-
-.theme-dark {
-    /* Uses default dark variables defined on :root */
-}
-
 .app-main {
     display: flex;
     flex-direction: column;
@@ -81,31 +67,6 @@ body {
     margin: 0 0 8px 0;
     font-size: 18px;
     font-weight: 500;
-}
-
-.theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    margin-left: auto;
-    gap: 4px;
-    background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 999px;
-    padding: 2px;
-}
-
-.theme-toggle-btn {
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    cursor: pointer;
-}
-
-.theme-toggle-btn.active {
-    background-color: #007acc;
-    color: #ffffff;
 }
 
 .status-badge {
@@ -477,6 +438,45 @@ body {
     height: 28px;
     background-color: var(--color-border);
     border-radius: 1px;
+}
+
+/* Flow D3 directed graph */
+.flow-d3-container {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+}
+
+.flow-d3-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.flow-d3-zoom-group {
+    cursor: grab;
+}
+
+.flow-d3-zoom-group:active {
+    cursor: grabbing;
+}
+
+.flow-link {
+    transition: stroke-opacity 0.15s;
+}
+
+.flow-d3-node:hover circle {
+    filter: brightness(1.15);
+}
+
+.flow-d3-node .flow-node-label {
+    pointer-events: none;
+}
+
+.flow-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--color-text-secondary);
 }
 
 /* Tools */

@@ -8,14 +8,10 @@ import HierarchyTab from "./components/HierarchyTab";
 import FlowTab from "./components/FlowTab";
 import ToolsTab from "./components/ToolsTab";
 import TabBar, { TabId, TabDefinition } from "./components/common/TabBar";
-import { ThemeMode, ResolvedTheme } from "./theme";
 
 interface AppProps {
     session: Session;
     statusOverride?: SessionStatus | null;
-    themeMode: ThemeMode;
-    resolvedTheme: ResolvedTheme;
-    onThemeModeChange?: (mode: ThemeMode) => void;
 }
 
 function getInitialTab(): TabId {
@@ -29,9 +25,6 @@ function getInitialTab(): TabId {
 function App({
     session,
     statusOverride,
-    themeMode,
-    resolvedTheme,
-    onThemeModeChange,
 }: AppProps) {
     const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
 
@@ -52,12 +45,10 @@ function App({
     ];
 
     return (
-        <div className={`app-container theme-${resolvedTheme}`}>
+        <div className="app-container">
             <SessionHeader
                 session={session}
                 statusOverride={statusOverride}
-                themeMode={themeMode}
-                onThemeModeChange={onThemeModeChange}
             />
 
             <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTabAndPersist} />

@@ -29,8 +29,8 @@ function getToolType(name: string): string {
 
 function getToolTypeCounts(session: Session): Map<string, number> {
     const counts = new Map<string, number>();
-    for (const message of session.messages) {
-        for (const tc of message.toolCalls) {
+    for (const message of session.messages ?? []) {
+        for (const tc of message.toolCalls ?? []) {
             const type = getToolType(tc.name);
             counts.set(type, (counts.get(type) ?? 0) + 1);
         }
@@ -40,8 +40,8 @@ function getToolTypeCounts(session: Session): Map<string, number> {
 
 function getToolNameCounts(session: Session): { name: string; count: number }[] {
     const counts = new Map<string, number>();
-    for (const message of session.messages) {
-        for (const tc of message.toolCalls) {
+    for (const message of session.messages ?? []) {
+        for (const tc of message.toolCalls ?? []) {
             const name = tc.name;
             counts.set(name, (counts.get(name) ?? 0) + 1);
         }
@@ -53,8 +53,8 @@ function getToolNameCounts(session: Session): { name: string; count: number }[] 
 
 function getTopFiles(session: Session, n: number): { path: string; count: number }[] {
     const pathCounts = new Map<string, number>();
-    for (const message of session.messages) {
-        for (const tc of message.toolCalls) {
+    for (const message of session.messages ?? []) {
+        for (const tc of message.toolCalls ?? []) {
             const toolLower = tc.name.toLowerCase();
             if (!toolLower.includes("read") && !toolLower.includes("write") && !toolLower.includes("grep"))
                 continue;
@@ -72,8 +72,8 @@ function getTopFiles(session: Session, n: number): { path: string; count: number
 
 function countUniqueFiles(session: Session): number {
     const paths = new Set<string>();
-    for (const message of session.messages) {
-        for (const tc of message.toolCalls) {
+    for (const message of session.messages ?? []) {
+        for (const tc of message.toolCalls ?? []) {
             const toolLower = tc.name.toLowerCase();
             if (!toolLower.includes("read") && !toolLower.includes("write") && !toolLower.includes("grep"))
                 continue;
@@ -189,11 +189,12 @@ function ToolsTab({ session }: ToolsTabProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [chartWidth, setChartWidth] = useState(400);
 
-    const totalMessages = session.messages.length;
+    const messages = session.messages ?? [];
+    const totalMessages = messages.length;
     const totalToolCalls = useMemo(
         () =>
-            session.messages.reduce(
-                (sum, m) => sum + m.toolCalls.length,
+            messages.reduce(
+                (sum, m) => sum + (m.toolCalls?.length ?? 0),
                 0
             ),
         [session]

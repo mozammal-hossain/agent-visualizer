@@ -4,9 +4,24 @@
     "description": "Visualize Cursor AI agent work: conversation timelines, tool usage analytics, agent hierarchy trees, and reasoning flow diagrams",
     "version": "0.1.0",
     "publisher": "agent-visualizer",
+    "license": "MIT",
+    "preview": true,
     "repository": {
         "type": "git",
         "url": "https://github.com/mozammal-hossain/agent-visualizer.git"
+    },
+    "keywords": [
+        "ai",
+        "agent",
+        "cursor",
+        "visualization",
+        "transcript",
+        "timeline",
+        "analytics"
+    ],
+    "galleryBanner": {
+        "color": "#007ACC",
+        "theme": "dark"
     },
     "engines": {
         "vscode": "^1.85.0"
@@ -61,6 +76,17 @@
                 "command": "agent-visualizer.copySessionId",
                 "title": "Copy Session ID",
                 "category": "Agent Visualizer"
+            },
+            {
+                "command": "agent-visualizer.filterSessions",
+                "title": "Filter Sessions",
+                "category": "Agent Visualizer",
+                "icon": "$(search)"
+            },
+            {
+                "command": "agent-visualizer.clearFilter",
+                "title": "Clear Filter",
+                "category": "Agent Visualizer"
             }
         ],
         "configuration": {
@@ -76,7 +102,17 @@
         "menus": {
             "view/title": [
                 {
+                    "command": "agent-visualizer.filterSessions",
+                    "group": "navigation",
+                    "when": "view == agentSessions"
+                },
+                {
                     "command": "agent-visualizer.refresh",
+                    "group": "navigation",
+                    "when": "view == agentSessions"
+                },
+                {
+                    "command": "agent-visualizer.clearFilter",
                     "group": "navigation",
                     "when": "view == agentSessions"
                 }

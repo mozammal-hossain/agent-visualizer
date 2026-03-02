@@ -186,19 +186,19 @@ In VS Code Command Palette (Cmd+Shift+P):
 ✅ Tool call visualization with parameters  
 ✅ Real-time file watching for updates  
 
-## What's Coming in Phase 2
+## Phase 2 (Complete)
 
 - Agent Hierarchy view (D3 tree showing parent/subagent relationships)
 - Tool Usage Dashboard (charts and file statistics)
 - Enhanced tree view with statistics
 
-## What's Coming in Phase 3
+## Phase 3 (Complete)
 
-- Flow Diagram view (directed graph of reasoning path)
-- Search/filter in sidebar
-- Dark/light theme support
-- Error handling and edge cases
-- Marketplace polish
+- Flow Diagram view (D3 force-directed graph with zoom/pan, tool branching, node tooltips)
+- Search/filter in sidebar (Filter Sessions and Clear Filter commands)
+- VS Code native theme (webview uses `--vscode-*` CSS variables)
+- Error handling: React ErrorBoundary, parser try/catch, defensive guards in tab components
+- Marketplace polish (keywords, galleryBanner, license, preview flag)
 
 ## Building for Distribution
 

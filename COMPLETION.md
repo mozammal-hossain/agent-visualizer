@@ -236,18 +236,18 @@ For manual testing:
 - **setup.sh**: Automated setup script
 - **Inline Comments**: Code documentation
 
-## 🔮 Next Phases
+## 🔮 Phases Status
 
-### Phase 2: Analytics
+### Phase 2: Analytics (Complete)
 - Agent Hierarchy view (D3 tree)
 - Tool Usage Dashboard (charts)
 - File statistics
 
-### Phase 3: Polish
-- Flow Diagram (reasoning path)
-- Search/filter
-- Theme support
-- Error handling polish
+### Phase 3: Polish (Complete)
+- Flow Diagram (D3 directed graph, reasoning path)
+- Search/filter in sidebar
+- VS Code native theme support
+- Error handling (ErrorBoundary, parser hardening)
 
 ## 🎯 Deliverables Checklist
 

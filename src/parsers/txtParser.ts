@@ -6,16 +6,29 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export class TxtParser {
     /**
-     * Parse a .txt format transcript file
+     * Parse a .txt format transcript file. Returns null on read or parse failure.
      */
-    static parse(filePath: string): Session {
-        const stat = fs.statSync(filePath);
+    static parse(filePath: string): Session | null {
+        let stat: ReturnType<typeof fs.statSync>;
+        try {
+            stat = fs.statSync(filePath);
+        } catch (e) {
+            console.warn(`TxtParser: could not stat file ${filePath}:`, e);
+            return null;
+        }
         if (stat.size > MAX_FILE_SIZE_BYTES) {
-            throw new Error(
+            console.warn(
                 `Transcript file too large to parse: ${stat.size} bytes (limit: ${MAX_FILE_SIZE_BYTES})`
             );
+            return null;
         }
-        const content = fs.readFileSync(filePath, "utf-8");
+        let content: string;
+        try {
+            content = fs.readFileSync(filePath, "utf-8");
+        } catch (e) {
+            console.warn(`TxtParser: could not read file ${filePath}:`, e);
+            return null;
+        }
         const messages: Message[] = [];
         let firstUserMessage = "";
 

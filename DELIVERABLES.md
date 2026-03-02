@@ -275,17 +275,18 @@ Press F5                    # Launch debug extension
 - Sidebar tree view
 - Timeline visualization
 
-### Phase 2 (Next)
+### Phase 2 ✅ COMPLETE
 - Agent Hierarchy view (D3 tree)
 - Tool Usage Dashboard (charts)
 - File access statistics
 - Enhanced tree metadata
 
-### Phase 3 (Future)
-- Flow Diagram (reasoning path)
-- Search/filter functionality
-- Theme customization
-- Error recovery
+### Phase 3 ✅ COMPLETE
+- Flow Diagram (D3 directed graph, reasoning path)
+- Search/filter functionality (Filter Sessions, Clear Filter)
+- VS Code native theme (--vscode-* variables)
+- Error recovery (ErrorBoundary, parser hardening, edge-case guards)
+- Marketplace metadata (keywords, galleryBanner, license, preview)
 
 ---
 
