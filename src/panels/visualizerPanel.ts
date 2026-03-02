@@ -15,6 +15,7 @@ export class VisualizerPanel {
     private readonly _extensionUri: vscode.Uri;
     private readonly _workspaceState: vscode.Memento;
     private _disposables: vscode.Disposable[] = [];
+    private _pinned: boolean = false;
     private transcriptService: TranscriptService;
     private _currentSession: Session | null = null;
     private _watchingFilePath: string | null = null;
@@ -50,6 +51,34 @@ export class VisualizerPanel {
 
         VisualizerPanel.currentPanel = new VisualizerPanel(
             panel,
+            extensionUri,
+            session,
+            transcriptService,
+            workspaceState
+        );
+    }
+
+    /**
+     * Follow the currently active session, unless the panel has been pinned
+     * by the user. If no panel exists yet, this will create one.
+     */
+    public static followActiveSession(
+        extensionUri: vscode.Uri,
+        session: Session,
+        transcriptService: TranscriptService,
+        workspaceState: vscode.Memento
+    ) {
+        const current = VisualizerPanel.currentPanel;
+        if (current) {
+            if (current._pinned) {
+                return;
+            }
+            current.setSession(session);
+            current._panel.reveal();
+            return;
+        }
+
+        VisualizerPanel.createOrShow(
             extensionUri,
             session,
             transcriptService,

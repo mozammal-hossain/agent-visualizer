@@ -31,7 +31,27 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     const openSessionCommand = vscode.commands.registerCommand(
         "agent-visualizer.openSession",
-        async (sessionId: string) => {
+        async (arg: string | SessionTreeItem) => {
+            // Support being called with either a raw session ID (from tree item command/webview)
+            // or a SessionTreeItem (from the view/item/context menu).
+            let sessionId: string | undefined;
+
+            if (typeof arg === "string") {
+                sessionId = arg;
+            } else if (arg && typeof arg === "object") {
+                // Context menu on a tree item passes the item instance as the first argument.
+                if (arg.session && typeof arg.session.id === "string") {
+                    sessionId = arg.session.id;
+                }
+            }
+
+            if (!sessionId) {
+                vscode.window.showErrorMessage(
+                    "Could not determine which session to open."
+                );
+                return;
+            }
+
             const session = transcriptService.getSession(sessionId);
             if (!session) {
                 vscode.window.showErrorMessage(`Session ${sessionId} not found`);
@@ -75,8 +95,27 @@ export function activate(context: vscode.ExtensionContext) {
 
         try {
             const watcher = vscode.workspace.createFileSystemWatcher(transcriptDir);
-            watcher.onDidCreate(() => treeProvider.refresh());
-            watcher.onDidChange(() => treeProvider.refresh());
+
+            const handleFsChange = () => {
+                treeProvider.refresh();
+                try {
+                    const session =
+                        transcriptService.getMostRecentlyActiveSession();
+                    if (session) {
+                        VisualizerPanel.followActiveSession(
+                            context.extensionUri,
+                            session,
+                            transcriptService,
+                            context.workspaceState
+                        );
+                    }
+                } catch (e) {
+                    console.error("Error auto-opening active session:", e);
+                }
+            };
+
+            watcher.onDidCreate(() => handleFsChange());
+            watcher.onDidChange(() => handleFsChange());
             watcher.onDidDelete(() => treeProvider.refresh());
             context.subscriptions.push(watcher);
         } catch (e) {
