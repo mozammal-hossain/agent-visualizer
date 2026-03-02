@@ -1,160 +1,203 @@
 {
-    "name": "agent-visualizer",
-    "displayName": "Agent Visualizer",
-    "description": "Visualize Cursor AI agent work: conversation timelines, tool usage analytics, agent hierarchy trees, and reasoning flow diagrams",
-    "version": "0.1.0",
-    "publisher": "agent-visualizer",
-    "license": "MIT",
-    "preview": true,
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mozammal-hossain/agent-visualizer.git"
-    },
-    "keywords": [
-        "ai",
-        "agent",
-        "cursor",
-        "visualization",
-        "transcript",
-        "timeline",
-        "analytics"
+  "name": "agent-visualizer",
+  "displayName": "Agent Visualizer",
+  "description": "Pixel art office where your LLM coding agents (Claude Code, Cursor, Codex, Aider, Cline, Continue, Copilot) come to life as animated characters",
+  "version": "0.2.0",
+  "publisher": "agent-visualizer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mozammal-hossain/agent-visualizer.git"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agent-visualizer.showPanel",
+        "title": "Show Agent Office",
+        "category": "Agent Visualizer"
+      },
+      {
+        "command": "agent-visualizer.exportDefaultLayout",
+        "title": "Agent Visualizer: Export Layout as Default"
+      },
+      {
+        "command": "agent-visualizer.openSession",
+        "title": "Open Session",
+        "category": "Agent Visualizer"
+      },
+      {
+        "command": "agent-visualizer.refresh",
+        "title": "Refresh Sessions",
+        "category": "Agent Visualizer",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agent-visualizer.copySessionId",
+        "title": "Copy Session ID",
+        "category": "Agent Visualizer"
+      },
+      {
+        "command": "agent-visualizer.filterSessions",
+        "title": "Filter Sessions",
+        "category": "Agent Visualizer",
+        "icon": "$(search)"
+      },
+      {
+        "command": "agent-visualizer.clearFilter",
+        "title": "Clear Filter",
+        "category": "Agent Visualizer"
+      }
     ],
-    "galleryBanner": {
-        "color": "#007ACC",
-        "theme": "dark"
-    },
-    "engines": {
-        "vscode": "^1.85.0"
-    },
-    "categories": [
-        "Visualization",
-        "Other"
-    ],
-    "activationEvents": [
-        "onStartupFinished"
-    ],
-    "main": "./dist/extension.js",
-    "contributes": {
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "agent-visualizer",
-                    "title": "Agent Visualizer",
-                    "icon": "resources/icon.svg"
-                }
-            ]
-        },
-        "views": {
-            "agent-visualizer": [
-                {
-                    "id": "agentSessions",
-                    "name": "Sessions",
-                    "when": "true"
-                }
-            ],
-            "explorer": [
-                {
-                    "id": "agentSessions",
-                    "name": "Agent Visualizer Sessions",
-                    "when": "true"
-                }
-            ]
-        },
-        "commands": [
-            {
-                "command": "agent-visualizer.openSession",
-                "title": "Open Session",
-                "category": "Agent Visualizer"
-            },
-            {
-                "command": "agent-visualizer.refresh",
-                "title": "Refresh Sessions",
-                "category": "Agent Visualizer",
-                "icon": "$(refresh)"
-            },
-            {
-                "command": "agent-visualizer.copySessionId",
-                "title": "Copy Session ID",
-                "category": "Agent Visualizer"
-            },
-            {
-                "command": "agent-visualizer.filterSessions",
-                "title": "Filter Sessions",
-                "category": "Agent Visualizer",
-                "icon": "$(search)"
-            },
-            {
-                "command": "agent-visualizer.clearFilter",
-                "title": "Clear Filter",
-                "category": "Agent Visualizer"
-            }
-        ],
-        "configuration": {
-            "title": "Agent Visualizer",
-            "properties": {
-                "agent-visualizer.playSound": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Play a sound when the agent completes a turn in the open session"
-                }
-            }
-        },
-        "menus": {
-            "view/title": [
-                {
-                    "command": "agent-visualizer.filterSessions",
-                    "group": "navigation",
-                    "when": "view == agentSessions"
-                },
-                {
-                    "command": "agent-visualizer.refresh",
-                    "group": "navigation",
-                    "when": "view == agentSessions"
-                },
-                {
-                    "command": "agent-visualizer.clearFilter",
-                    "group": "navigation",
-                    "when": "view == agentSessions"
-                }
-            ],
-            "view/item/context": [
-                {
-                    "command": "agent-visualizer.openSession",
-                    "group": "inline",
-                    "when": "view == agentSessions && viewItem =~ /session/"
-                },
-                {
-                    "command": "agent-visualizer.copySessionId",
-                    "group": "1_modification",
-                    "when": "view == agentSessions && viewItem =~ /session/"
-                }
-            ]
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "agent-visualizer-panel",
+          "title": "Agent Office",
+          "icon": "$(window)"
         }
+      ],
+      "activitybar": [
+        {
+          "id": "agent-visualizer",
+          "title": "Agent Visualizer",
+          "icon": "resources/icon.svg"
+        }
+      ]
     },
-    "scripts": {
-        "postinstall": "cd webview-ui && npm install",
-        "vscode:prepublish": "npm run build",
-        "build": "npm run build:ext && npm run build:webview",
-        "build:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --target=node18",
-        "build:webview": "cd webview-ui && vite build",
-        "watch": "npm run watch:ext & npm run watch:webview",
-        "watch:ext": "npm run build:ext -- --watch",
-        "watch:webview": "cd webview-ui && vite build --watch",
-        "dev": "npm run watch",
-        "test": "vitest",
-        "lint": "eslint src webview-ui/src",
-        "package": "npm run build && npx vsce package --no-dependencies"
+    "views": {
+      "agent-visualizer-panel": [
+        {
+          "type": "webview",
+          "id": "agent-visualizer.panelView",
+          "name": "Agent Office"
+        }
+      ],
+      "agent-visualizer": [
+        {
+          "id": "agentSessions",
+          "name": "Sessions",
+          "when": "true"
+        }
+      ]
     },
-    "devDependencies": {
-        "@vscode/vsce": "^3.2.0",
-        "@types/node": "^20.0.0",
-        "@types/vscode": "^1.85.0",
-        "@typescript-eslint/eslint-plugin": "^6.0.0",
-        "@typescript-eslint/parser": "^6.0.0",
-        "esbuild": "^0.19.0",
-        "eslint": "^8.0.0",
-        "typescript": "^5.3.0",
-        "vite": "^5.0.0"
+    "configuration": {
+      "title": "Agent Visualizer",
+      "properties": {
+        "agent-visualizer.playSound": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play a sound when the agent completes a turn in the open session"
+        },
+        "agent-visualizer.providers.claudeCode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Claude Code provider"
+        },
+        "agent-visualizer.providers.cursor.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Cursor provider"
+        },
+        "agent-visualizer.providers.codexCli.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Codex CLI provider"
+        },
+        "agent-visualizer.providers.aider.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Aider provider"
+        },
+        "agent-visualizer.providers.cline.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Cline provider"
+        },
+        "agent-visualizer.providers.continue.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Continue.dev provider"
+        },
+        "agent-visualizer.providers.copilot.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copilot provider"
+        }
+      }
     },
-    "dependencies": {}
+    "menus": {
+      "view/menu": [
+        {
+          "command": "agent-visualizer.showPanel",
+          "group": "2_web",
+          "when": "true"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "agent-visualizer.filterSessions",
+          "group": "navigation",
+          "when": "view == agentSessions"
+        },
+        {
+          "command": "agent-visualizer.refresh",
+          "group": "navigation",
+          "when": "view == agentSessions"
+        },
+        {
+          "command": "agent-visualizer.clearFilter",
+          "group": "navigation",
+          "when": "view == agentSessions"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "agent-visualizer.openSession",
+          "group": "inline",
+          "when": "view == agentSessions && viewItem =~ /session/"
+        },
+        {
+          "command": "agent-visualizer.copySessionId",
+          "group": "1_modification",
+          "when": "view == agentSessions && viewItem =~ /session/"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "postinstall": "cd webview-ui && npm install",
+    "vscode:prepublish": "npm run package",
+    "build:webview": "cd webview-ui && npm run build",
+    "compile": "npm run check-types && node esbuild.js && npm run build:webview",
+    "build": "npm run compile",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && node esbuild.js --production && npm run build:webview",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "22.x",
+    "@types/pngjs": "^6.0.5",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "npm-run-all": "^4.1.5",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vite": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
 }

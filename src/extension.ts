@@ -1,4 +1,14 @@
 import * as vscode from "vscode";
+import { ViewProvider } from "./ViewProvider.js";
+import { ProviderRegistry } from "./providers/registry.js";
+import { ClaudeCodeProvider } from "./providers/claude-code/index.js";
+import { CursorProvider } from "./providers/cursor/index.js";
+import { CodexCLIProvider } from "./providers/codex-cli/index.js";
+import { AiderProvider } from "./providers/aider/index.js";
+import { ClineProvider } from "./providers/cline/index.js";
+import { ContinueProvider } from "./providers/continue/index.js";
+import { CopilotProvider } from "./providers/copilot/index.js";
+import { VIEW_ID, COMMAND_SHOW_PANEL, COMMAND_EXPORT_DEFAULT_LAYOUT } from "./constants.js";
 import { SessionTreeProvider, SessionTreeItem } from "./providers/sessionTreeProvider";
 import { VisualizerPanel } from "./panels/visualizerPanel";
 import { TranscriptService, createTranscriptService } from "./services/transcriptService";
@@ -6,9 +16,45 @@ import { PathResolver } from "./services/pathResolver";
 
 let transcriptService: TranscriptService;
 let treeProvider: SessionTreeProvider;
+let viewProviderInstance: ViewProvider | undefined;
+let providerRegistryInstance: ProviderRegistry | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log("Agent Visualizer extension activated");
+
+    // Agent Office panel (pixel art visualization)
+    const providerRegistry = new ProviderRegistry();
+    const config = vscode.workspace.getConfiguration("agent-visualizer");
+    if (config.get<boolean>("providers.claudeCode.enabled", true)) providerRegistry.register(new ClaudeCodeProvider());
+    if (config.get<boolean>("providers.cursor.enabled", true)) providerRegistry.register(new CursorProvider());
+    if (config.get<boolean>("providers.codexCli.enabled", true)) providerRegistry.register(new CodexCLIProvider());
+    if (config.get<boolean>("providers.aider.enabled", true)) providerRegistry.register(new AiderProvider());
+    if (config.get<boolean>("providers.cline.enabled", true)) providerRegistry.register(new ClineProvider());
+    if (config.get<boolean>("providers.continue.enabled", true)) providerRegistry.register(new ContinueProvider());
+    if (config.get<boolean>("providers.copilot.enabled", true)) providerRegistry.register(new CopilotProvider());
+    const providerContext = {
+        extensionPath: context.extensionUri.fsPath,
+        workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+        globalState: context.globalState,
+        workspaceState: context.workspaceState,
+    };
+    void providerRegistry.activateAll(providerContext);
+    providerRegistryInstance = providerRegistry;
+    const viewProvider = new ViewProvider(context, providerRegistry);
+    viewProviderInstance = viewProvider;
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(VIEW_ID, viewProvider)
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand(COMMAND_SHOW_PANEL, () => {
+            vscode.commands.executeCommand(`${VIEW_ID}.focus`);
+        })
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand(COMMAND_EXPORT_DEFAULT_LAYOUT, () => {
+            viewProvider.exportDefaultLayout();
+        })
+    );
 
     // Get workspace folder
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -149,5 +195,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+    providerRegistryInstance?.deactivateAll();
+    providerRegistryInstance = undefined;
+    viewProviderInstance?.dispose();
+    viewProviderInstance = undefined;
     console.log("Agent Visualizer extension deactivated");
 }
