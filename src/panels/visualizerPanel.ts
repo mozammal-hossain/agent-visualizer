@@ -105,7 +105,7 @@ export class VisualizerPanel {
                 this._extensionUri,
                 "webview-ui",
                 "dist",
-                "style.css"
+                "index.css"
             )
         );
 
