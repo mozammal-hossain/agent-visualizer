@@ -274,3 +274,5 @@ Add the Flow Diagram view, real-time file watching, search/filter in sidebar, an
 - VS Code native theme (webview uses `--vscode-*` CSS variables; follows editor light/dark/high-contrast)
 - Error handling and edge cases (React ErrorBoundary, parser try/catch, defensive `session.messages` / `subagents` guards)
 - Extension icon and marketplace metadata (keywords, galleryBanner, license, preview flag)
+
+TEST
